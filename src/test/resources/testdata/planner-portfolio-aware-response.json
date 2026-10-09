@@ -1,0 +1,338 @@
+{
+    "data": {
+        "aware_type": "PORTFOLIO_AWARE",
+        "breakdown_funds_data": {
+            "data": [
+                {
+                    "data": [
+                        {
+                            "legs": [
+                                {
+                                    "amount": 12500,
+                                    "amount_fmt": "₹12,500",
+                                    "duration_fmt": "180 months",
+                                    "duration_months": 180,
+                                    "frequency_fmt": "month",
+                                    "is_recurring": true,
+                                    "type": "sip",
+                                    "type_fmt": "SIP"
+                                },
+                                {
+                                    "amount": 2500000,
+                                    "amount_fmt": "₹25,00,000",
+                                    "duration_fmt": "This month",
+                                    "duration_months": null,
+                                    "is_recurring": false,
+                                    "type": "one_time",
+                                    "type_fmt": "One-time"
+                                }
+                            ],
+                            "plan_data": {
+                                "is_show": true,
+                                "name": "Axis Short Term Dir-G"
+                            }
+                        }
+                    ],
+                    "name": "Debt",
+                    "perc_fmt": "25%"
+                },
+                {
+                    "data": [
+                        {
+                            "legs": [
+                                {
+                                    "amount": 12500,
+                                    "amount_fmt": "₹12,500",
+                                    "duration_fmt": "180 months",
+                                    "duration_months": 180,
+                                    "frequency_fmt": "month",
+                                    "is_recurring": true,
+                                    "type": "sip",
+                                    "type_fmt": "SIP"
+                                },
+                                {
+                                    "amount": 69500,
+                                    "amount_fmt": "₹69,500",
+                                    "duration_fmt": "36 months",
+                                    "duration_months": 36,
+                                    "frequency_fmt": "month",
+                                    "is_recurring": true,
+                                    "type": "sip",
+                                    "type_fmt": "SIP"
+                                }
+                            ],
+                            "plan_data": {
+                                "is_show": true,
+                                "name": "Kotak Flexicap Dir-G"
+                            }
+                        },
+                        {
+                            "legs": [
+                                {
+                                    "amount": 12500,
+                                    "amount_fmt": "₹12,500",
+                                    "duration_fmt": "180 months",
+                                    "duration_months": 180,
+                                    "frequency_fmt": "month",
+                                    "is_recurring": true,
+                                    "type": "sip",
+                                    "type_fmt": "SIP"
+                                },
+                                {
+                                    "amount": 69500,
+                                    "amount_fmt": "₹69,500",
+                                    "duration_fmt": "36 months",
+                                    "duration_months": 36,
+                                    "frequency_fmt": "month",
+                                    "is_recurring": true,
+                                    "type": "sip",
+                                    "type_fmt": "SIP"
+                                }
+                            ],
+                            "plan_data": {
+                                "is_show": true,
+                                "name": "Motilal Oswal Large and Midcap Dir-G"
+                            }
+                        },
+                        {
+                            "legs": [
+                                {
+                                    "amount": 12500,
+                                    "amount_fmt": "₹12,500",
+                                    "duration_fmt": "180 months",
+                                    "duration_months": 180,
+                                    "frequency_fmt": "month",
+                                    "is_recurring": true,
+                                    "type": "sip",
+                                    "type_fmt": "SIP"
+                                },
+                                {
+                                    "amount": 69333,
+                                    "amount_fmt": "₹69,333",
+                                    "duration_fmt": "36 months",
+                                    "duration_months": 36,
+                                    "frequency_fmt": "month",
+                                    "is_recurring": true,
+                                    "type": "sip",
+                                    "type_fmt": "SIP"
+                                }
+                            ],
+                            "plan_data": {
+                                "is_show": true,
+                                "name": "ICICI Pru Large & Mid Cap Dir-G"
+                            }
+                        }
+                    ],
+                    "name": "Equity",
+                    "perc_fmt": "75%"
+                }
+            ],
+            "title": "Investment Breakdown",
+            "totals_data": {
+                "first_month_total_fmt": "₹27,58,333",
+                "lumpsum_spread_fmt": null,
+                "one_time_fmt": "₹25,00,000",
+                "sip_total_fmt": "₹2,58,333"
+            }
+        },
+        "disclaimer_data": {
+            "data": [
+                "All investments fall as well as rise in value and you could get back less than you invest. You acknowledge that the information provided by Independent Advisors Private Limited (Operator) is compiled from sources, which are beyond the control of the Operator. Though such information is recognized to be generally reliable, you acknowledge that inaccuracies may occur and the Operator does not warrant the consistency or suitability of the information.",
+                "The Operator will maintain records of all advice given to you (including in the form of telephonic or SMS advice) as required by SEBI regulations and guidelines. Please refer to the detailed <a href=\"/fund-advisor/user-agreement/\" class=\"term-condition\"> Terms &amp; Conditions</a>.",
+                "You hereby agree and acknowledge that the investment advice provided by the Operator is subject to your risk profile provided to the Operator and you assume full responsibility for implementing necessary standards for assessing your risk appetite.",
+                "The Operator, its directors, employees, and agents will not be liable for any investment decision made or action taken by you and others based on news, information, recommendation, opinion, or any other material published through our services or Affiliates (including, but not limited to Value Research India Private Limited).",
+                "The Operator does not receive any remuneration in respect of the underlying products being recommended. In providing the information and advice, the Operator makes no endorsement of any particular security, market participant, or brokerage.",
+                "The Operator, its directors, employees, and agents may have holding or position in the securities advised herein.",
+                "The Operator acts in a fiduciary capacity towards you and provides services subscribed in a professional and diligent manner.",
+                "In the event of any discrepancy in the text or interpretation of these disclaimers in Hindi or English, the English disclaimers will prevail."
+            ],
+            "title": "Important Disclaimer"
+        },
+        "funds_data": {
+            "data": [
+                {
+                    "category_data": {
+                        "category_fmt": "Flexi Cap",
+                        "category_id": 102,
+                        "is_show": true
+                    },
+                    "first_month_amount": 82000,
+                    "first_month_amount_fmt": "₹82,000",
+                    "is_owned": true,
+                    "legs": [
+                        {
+                            "amount": 12500,
+                            "amount_fmt": "₹12,500",
+                            "duration_fmt": "180 months",
+                            "duration_months": 180,
+                            "frequency_fmt": "month",
+                            "is_recurring": true,
+                            "type": "sip",
+                            "type_fmt": "SIP"
+                        },
+                        {
+                            "amount": 69500,
+                            "amount_fmt": "₹69,500",
+                            "duration_fmt": "36 months",
+                            "duration_months": 36,
+                            "frequency_fmt": "month",
+                            "is_recurring": true,
+                            "type": "sip",
+                            "type_fmt": "SIP"
+                        }
+                    ],
+                    "mode_label_fmt": "first-month total",
+                    "plan_data": {
+                        "full_url": "/funds/kotak-flexicap-fund-direct-plan-17140/",
+                        "is_show": true,
+                        "name": "Kotak Flexicap Dir-G",
+                        "plan_id": 17140
+                    }
+                },
+                {
+                    "category_data": {
+                        "category_fmt": "Large & MidCap",
+                        "category_id": 101,
+                        "is_show": true
+                    },
+                    "first_month_amount": 82000,
+                    "first_month_amount_fmt": "₹82,000",
+                    "is_owned": true,
+                    "legs": [
+                        {
+                            "amount": 12500,
+                            "amount_fmt": "₹12,500",
+                            "duration_fmt": "180 months",
+                            "duration_months": 180,
+                            "frequency_fmt": "month",
+                            "is_recurring": true,
+                            "type": "sip",
+                            "type_fmt": "SIP"
+                        },
+                        {
+                            "amount": 69500,
+                            "amount_fmt": "₹69,500",
+                            "duration_fmt": "36 months",
+                            "duration_months": 36,
+                            "frequency_fmt": "month",
+                            "is_recurring": true,
+                            "type": "sip",
+                            "type_fmt": "SIP"
+                        }
+                    ],
+                    "mode_label_fmt": "first-month total",
+                    "plan_data": {
+                        "full_url": "/funds/motilal-oswal-large-and-midcap-fund-direct-plan-40338/",
+                        "is_show": true,
+                        "name": "Motilal Oswal Large and Midcap Dir-G",
+                        "plan_id": 40338
+                    }
+                },
+                {
+                    "category_data": {
+                        "category_fmt": "Large & MidCap",
+                        "category_id": 101,
+                        "is_show": true
+                    },
+                    "first_month_amount": 81833.33333333333,
+                    "first_month_amount_fmt": "₹81,833",
+                    "is_owned": false,
+                    "legs": [
+                        {
+                            "amount": 12500,
+                            "amount_fmt": "₹12,500",
+                            "duration_fmt": "180 months",
+                            "duration_months": 180,
+                            "frequency_fmt": "month",
+                            "is_recurring": true,
+                            "type": "sip",
+                            "type_fmt": "SIP"
+                        },
+                        {
+                            "amount": 69333,
+                            "amount_fmt": "₹69,333",
+                            "duration_fmt": "36 months",
+                            "duration_months": 36,
+                            "frequency_fmt": "month",
+                            "is_recurring": true,
+                            "type": "sip",
+                            "type_fmt": "SIP"
+                        }
+                    ],
+                    "mode_label_fmt": "first-month total",
+                    "plan_data": {
+                        "full_url": "/funds/icici-prudential-large-mid-cap-fund-direct-plan-15868/",
+                        "is_show": true,
+                        "name": "ICICI Pru Large & Mid Cap Dir-G",
+                        "plan_id": 15868
+                    }
+                },
+                {
+                    "category_data": {
+                        "category_fmt": "Short Duration",
+                        "category_id": 122,
+                        "is_show": true
+                    },
+                    "first_month_amount": 2512500,
+                    "first_month_amount_fmt": "₹25,12,500",
+                    "is_owned": false,
+                    "legs": [
+                        {
+                            "amount": 12500,
+                            "amount_fmt": "₹12,500",
+                            "duration_fmt": "180 months",
+                            "duration_months": 180,
+                            "frequency_fmt": "month",
+                            "is_recurring": true,
+                            "type": "sip",
+                            "type_fmt": "SIP"
+                        },
+                        {
+                            "amount": 2500000,
+                            "amount_fmt": "₹25,00,000",
+                            "duration_fmt": "This month",
+                            "duration_months": null,
+                            "is_recurring": false,
+                            "type": "one_time",
+                            "type_fmt": "One-time"
+                        }
+                    ],
+                    "mode_label_fmt": "first-month total",
+                    "plan_data": {
+                        "full_url": "/funds/axis-short-term-fund-direct-plan-15752/",
+                        "is_show": true,
+                        "name": "Axis Short Term Dir-G",
+                        "plan_id": 15752
+                    }
+                }
+            ],
+            "title": "4 Suitable Mutual Funds",
+            "total_investment_data": {
+                "amount": 2758333.3333333335,
+                "amount_fmt": "₹27,58,333",
+                "label": "First-month investment"
+            }
+        },
+        "inpage_title": "Your investment plan",
+        "input_summary_data": {
+            "text_fmt": "₹50,000 monthly SIP + ₹1,00,00,000 one-time · 15 years"
+        },
+        "investor": {
+            "investor_id": 87683240,
+            "investor_name": "test1290",
+            "pan": null,
+            "user_id": 81843819
+        },
+        "note": null,
+        "parent_port_builder_id": null,
+        "plan_note_data": {
+            "is_show": true,
+            "style": "positive",
+            "text_fmt": "You already own <b>2 funds suitable for this goal</b>, so your plan is built around them. Invest more in them as shown below."
+        },
+        "port_builder_id": "01a05730-4ae4-72a5-93c2-c16dc6c86405",
+        "recommend_reason_data": "<h3 class=\"section-title text-center mt20 mb-lg-5 mb-4\">Why are we recommending these?</h3>\n<div class=\"why-recommending-row text-center item\"><h5 class='symbol counter-highlight'>1</h5><p class=\"this-mean vr-block-ele\"><strong>Because of your long investment horizon</strong></p><p class=\"this-mean mt-1 mb10\">We’re suggesting investing in a combination of equity and debt funds, given your moderate risk profile</p><p class=\"this-mean grey-text mb0\">Invest 75% of your money in the provided equity funds. The latter will provide geographical diversification so that a sharp correction in the Indian markets will not affect your entire investment. Invest the balance 25% in the provided Short Duration fund. This portfolio can earn higher returns than the rate of inflation as well as fixed-income investment options. But there will be ups and downs along the way.</p><p class=\"this-mean grey-text mb0\">You should rebalance these investments periodically to keep the equity allocation between 65% and 85% of the total portfolio value. For example, if the equity allocation rises above 85%, you should sell some of the equity fund holding and invest it in the provided debt fund(s) to restore it to 75%.</p></div>\n<div class=\"why-recommending-row text-center item\"><h5 class='symbol counter-highlight'>2</h5><p class=\"p--section-desc p--section-desc-16px vr-block-ele\"><strong>Because you’ve chosen to invest a lumpsum amount</strong></p><p class=\"this-mean grey-text mb10 mt10\">It is better not to invest all your money at one go in equity funds. Spread the equity portion of your lumpsum amount over a number of months as per the provided investment plan.</p></div>\n<input type='hidden' id='counter-type' value='2'>"
+    },
+    "message": "New Record Added",
+    "status": true
+}

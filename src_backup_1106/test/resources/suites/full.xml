@@ -1,0 +1,31 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+    Everything - deliberately no <groups> filter at all, unlike the other
+    three tiers. "Full" means "run every test method found in these
+    packages," which is exactly what omitting a group filter already does -
+    no test needs a "full" tag added to it for this to include it. Reserved
+    for release-gate or scheduled deep runs, not routine CI. Run with:
+        mvn test -DsuiteXmlFile=src/test/resources/suites/full.xml
+-->
+<suite name="APIAutomationFullSuite" parallel="classes" thread-count="5" verbose="1">
+
+    <listeners>
+        <listener class-name="com.org.apiautomation.listeners.TestLifecycleListener"/>
+        <listener class-name="com.org.apiautomation.listeners.RetryAnnotationTransformer"/>
+    </listeners>
+
+    <test name="Full Suite">
+        <packages>
+            <package name="com.org.apitests.authentication.*"/>
+            <package name="com.org.apitests.users.*"/>
+            <package name="com.org.apitests.portfolio.*"/>
+            <package name="com.org.apitests.funds.*"/>
+            <package name="com.org.apitests.stocks.*"/>
+            <package name="com.org.apitests.transactions.*"/>
+            <package name="com.org.apitests.notifications.*"/>
+            <package name="com.org.apitests.common.*"/>
+            <package name="com.org.apitests.hub.*"/>
+        </packages>
+    </test>
+
+</suite>

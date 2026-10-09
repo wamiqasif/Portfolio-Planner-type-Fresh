@@ -1,0 +1,104 @@
+diff -ru a/src/main/java/com/org/apiautomation/auth/GuidSessionAuthenticator.java b/src/main/java/com/org/apiautomation/auth/GuidSessionAuthenticator.java
+--- a/src/main/java/com/org/apiautomation/auth/GuidSessionAuthenticator.java	2026-10-08 07:27:25.000000000 +0000
++++ b/src/main/java/com/org/apiautomation/auth/GuidSessionAuthenticator.java	2026-10-08 09:27:02.252576947 +0000
+@@ -63,6 +63,11 @@
+     private static final Map<Cookies, String> BEARERS = Collections.synchronizedMap(new IdentityHashMap<>());
+     /** Reason no bearer was obtained - cookie NAMES only, never values. */
+     private static final Map<Cookies, String> BEARER_FAILURES = Collections.synchronizedMap(new IdentityHashMap<>());
++    /** Sessions using the shared API-1 token - refreshed automatically when the JWT is about to expire. */
++    private static final java.util.Set<Cookies> SHARED_SESSIONS =
++            Collections.synchronizedSet(Collections.newSetFromMap(new IdentityHashMap<>()));
++    /** Refresh the shared JWT when fewer than this many seconds remain (a run of 146 rows outlived the token). */
++    private static final long REFRESH_MARGIN_SECONDS = 120;
+ 
+     /**
+      * Calls {@code loginUrl} (a full URL, exactly as given in the Excel
+@@ -100,6 +105,10 @@
+     public static RequestSpecification attach(RequestSpecification spec, Cookies cookies) {
+         RequestSpecification withCookies = spec.cookies(cookies);
+         String bearer = BEARERS.get(cookies);
++        if (bearer != null && SHARED_SESSIONS.contains(cookies)) {
++            bearer = freshSharedToken(bearer);
++            BEARERS.put(cookies, bearer);
++        }
+         return bearer == null ? withCookies : withCookies.header("Authorization", "Bearer " + bearer);
+     }
+ 
+@@ -140,6 +149,9 @@
+             LOGGER.warn(reason);
+         } else {
+             BEARERS.put(cookies, token);
++            if ("shared".equals(strategy)) {
++                SHARED_SESSIONS.add(cookies);
++            }
+             LOGGER.info("GUID session bearer attached: mode={}, strategy={}, cookie names={}", mode, strategy, names);
+         }
+     }
+@@ -179,4 +191,39 @@
+         }
+         return null;
+     }
++
++    /**
++     * Returns {@code current} unless its JWT {@code exp} is within {@link #REFRESH_MARGIN_SECONDS};
++     * then re-authenticates via {@link Api1AuthService}. Fix for the 08-Oct-2026 run where the last
++     * rows got 401 -> vrlogin retry -> "Login failed with status 307" because the token had expired.
++     */
++    private static synchronized String freshSharedToken(String current) {
++        Long exp = jwtExpiry(current);
++        long now = System.currentTimeMillis() / 1000;
++        if (exp != null && exp - now > REFRESH_MARGIN_SECONDS) {
++            return current;
++        }
++        String latest = Api1AuthService.getInstance().getAccessToken();
++        if (latest.equals(current)) {
++            Api1AuthService.getInstance().invalidate();
++            latest = Api1AuthService.getInstance().getAccessToken();
++            LOGGER.info("Shared API-1 Bearer token refreshed (old one expired or expiring)");
++        }
++        return latest;
++    }
++
++    /** Reads the {@code exp} claim of a JWT without verifying it; null if not a readable JWT. */
++    private static Long jwtExpiry(String jwt) {
++        try {
++            String[] parts = jwt.split("\\.");
++            if (parts.length < 2) {
++                return null;
++            }
++            String json = new String(java.util.Base64.getUrlDecoder().decode(parts[1]), java.nio.charset.StandardCharsets.UTF_8);
++            java.util.regex.Matcher m = Pattern.compile("\"exp\"\\s*:\\s*(\\d+)").matcher(json);
++            return m.find() ? Long.parseLong(m.group(1)) : null;
++        } catch (RuntimeException e) {
++            return null;
++        }
++    }
+ }
+diff -ru a/src/test/java/com/org/apitests/portfolio/PortfolioPlannerCompleteCoverageTests.java b/src/test/java/com/org/apitests/portfolio/PortfolioPlannerCompleteCoverageTests.java
+--- a/src/test/java/com/org/apitests/portfolio/PortfolioPlannerCompleteCoverageTests.java	2026-10-08 07:27:41.000000000 +0000
++++ b/src/test/java/com/org/apitests/portfolio/PortfolioPlannerCompleteCoverageTests.java	2026-10-08 09:27:02.252962733 +0000
+@@ -432,7 +432,8 @@
+         String portfolioBody = safeBody(portfolioResponse);
+         String compact = portfolioBody.toLowerCase().replaceAll("\\s", "");
+         if (compact.contains("label(s)notfound") || compact.contains("investornotfound")
+-                || (compact.contains("\"success\":false") && compact.contains("\"data\":[]"))) {
++                || (compact.contains("\"success\":false") && compact.contains("\"data\":[]"))
++                || compact.contains("\"fund-data\":[]")) {
+             throw new DataNotAvailable("User Portfolio has no data for label " + labelId + ". Body: " + abbreviate(portfolioBody, 300));
+         }
+         UserPortfolioResponse portfolio = parse(portfolioResponse, UserPortfolioResponse.class);
+diff -ru a/src/test/java/com/org/apitests/portfolio/PortfolioPlannerExecutionDataDrivenTests.java b/src/test/java/com/org/apitests/portfolio/PortfolioPlannerExecutionDataDrivenTests.java
+--- a/src/test/java/com/org/apitests/portfolio/PortfolioPlannerExecutionDataDrivenTests.java	2026-10-08 07:27:51.000000000 +0000
++++ b/src/test/java/com/org/apitests/portfolio/PortfolioPlannerExecutionDataDrivenTests.java	2026-10-08 09:27:02.252789977 +0000
+@@ -284,6 +284,11 @@
+         String lower = body == null ? "" : body.toLowerCase();
+         boolean notFound = lower.contains("label(s) not found") || lower.contains("investor not found");
+         boolean emptyFailure = lower.replaceAll("\\s", "").contains("\"success\":false") && lower.replaceAll("\\s", "").contains("\"data\":[]");
++        boolean noHoldings = lower.replaceAll("\\s", "").contains("\"fund-data\":[]");
++        if (noHoldings) {
++            throw new DataNotAvailableException("Label exists but has NO fund holdings (fund-data is empty) - "
++                    + "test data not usable for PORTFOLIO_AWARE (BLOCKED). Dev-created holdings may not be visible yet.");
++        }
+         if (notFound || emptyFailure) {
+             String shown = body.length() > 300 ? body.substring(0, 300) + "..." : body;
+             throw new DataNotAvailableException("User Portfolio has no data for this label/investor. Body: " + shown);

@@ -1,0 +1,91 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Hub API response",
+  "type": "object",
+  "required": ["status", "data"],
+  "properties": {
+    "status": { "type": "boolean" },
+    "data": {
+      "type": "object",
+      "required": ["inpage_title", "hub", "add_investor", "is_add_investor_allowed"],
+      "properties": {
+        "inpage_title": { "type": "string" },
+        "is_add_investor_allowed": { "type": "boolean" },
+        "add_investor": {
+          "type": "object",
+          "required": ["is_show", "is_active", "title", "url"],
+          "properties": {
+            "is_show": { "type": "boolean" },
+            "is_active": { "type": "boolean" },
+            "title": { "type": "string" },
+            "url": { "type": "string" },
+            "component_code": { "type": ["string", "null"] }
+          }
+        },
+        "hub": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/hubGroup" }
+        },
+        "disclosures": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["text"],
+            "properties": {
+              "title": { "type": "string" },
+              "text": { "type": "string" }
+            }
+          }
+        },
+        "disclosures_data": {
+          "type": "object"
+        }
+      }
+    },
+    "page_info": { "type": "object" },
+    "tracking_info": { "type": "object" }
+  },
+  "definitions": {
+    "hubGroup": {
+      "type": "object",
+      "required": ["id", "title", "menus"],
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "menus": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/menu" }
+        }
+      }
+    },
+    "menu": {
+      "type": "object",
+      "required": ["id", "title", "icon", "url", "is_ext_url", "action_hint"],
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "icon": { "type": "string" },
+        "url": { "type": "string" },
+        "download_url": { "type": ["string", "null"] },
+        "is_ext_url": { "type": "boolean" },
+        "component_code": { "type": ["string", "null"] },
+        "action_hint": { "type": "string" },
+        "products": {
+          "type": ["array", "null"],
+          "items": { "$ref": "#/definitions/product" }
+        }
+      }
+    },
+    "product": {
+      "type": "object",
+      "required": ["title", "url", "is_ext_url"],
+      "properties": {
+        "title": { "type": "string" },
+        "url": { "type": "string" },
+        "download_url": { "type": ["string", "null"] },
+        "is_ext_url": { "type": "boolean" },
+        "component_code": { "type": ["string", "null"] }
+      }
+    }
+  }
+}

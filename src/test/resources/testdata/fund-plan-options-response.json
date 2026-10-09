@@ -1,0 +1,286 @@
+{
+    "data": [
+        {
+            "plan_id": 19701,
+            "sip_investment_details": [
+                {
+                    "amount_from": 1000,
+                    "amount_in_multiples_of": 1,
+                    "amount_to": null,
+                    "date_from": "2021-09-09",
+                    "date_to": null,
+                    "frequency_code_name": "M",
+                    "frequency_desc": "Monthly",
+                    "frequency_id": 4,
+                    "installments": 6,
+                    "max_amount": null,
+                    "min_agg_amount": null,
+                    "min_amount": null
+                },
+                {
+                    "amount_from": 3000,
+                    "amount_in_multiples_of": 1,
+                    "amount_to": null,
+                    "date_from": "2021-09-09",
+                    "date_to": null,
+                    "frequency_code_name": "Q",
+                    "frequency_desc": "Quarterly",
+                    "frequency_id": 5,
+                    "installments": 4,
+                    "max_amount": null,
+                    "min_agg_amount": null,
+                    "min_amount": null
+                }
+            ]
+        },
+        {
+            "plan_id": 15752,
+            "sip_investment_details": [
+                {
+                    "amount_from": 100,
+                    "amount_in_multiples_of": 1,
+                    "amount_to": null,
+                    "date_from": "2023-08-18",
+                    "date_to": null,
+                    "frequency_code_name": "W",
+                    "frequency_desc": "Weekly",
+                    "frequency_id": 2,
+                    "installments": 6,
+                    "max_amount": null,
+                    "min_agg_amount": null,
+                    "min_amount": null
+                },
+                {
+                    "amount_from": 12000,
+                    "amount_in_multiples_of": 1,
+                    "amount_to": null,
+                    "date_from": "2024-11-07",
+                    "date_to": null,
+                    "frequency_code_name": "AN",
+                    "frequency_desc": "Annual",
+                    "frequency_id": 7,
+                    "installments": 3,
+                    "max_amount": null,
+                    "min_agg_amount": null,
+                    "min_amount": null
+                },
+                {
+                    "amount_from": 10,
+                    "amount_in_multiples_of": 1,
+                    "amount_to": null,
+                    "date_from": "2025-06-17",
+                    "date_to": null,
+                    "frequency_code_name": "D",
+                    "frequency_desc": "Daily",
+                    "frequency_id": 1,
+                    "installments": 6,
+                    "max_amount": null,
+                    "min_agg_amount": null,
+                    "min_amount": null
+                },
+                {
+                    "amount_from": 100,
+                    "amount_in_multiples_of": 1,
+                    "amount_to": null,
+                    "date_from": "2025-11-14",
+                    "date_to": null,
+                    "frequency_code_name": "M",
+                    "frequency_desc": "Monthly",
+                    "frequency_id": 4,
+                    "installments": 6,
+                    "max_amount": null,
+                    "min_agg_amount": null,
+                    "min_amount": null
+                }
+            ]
+        },
+        {
+            "plan_id": 40338,
+            "sip_investment_details": [
+                {
+                    "amount_from": 500,
+                    "amount_in_multiples_of": 1,
+                    "amount_to": null,
+                    "date_from": "2024-06-26",
+                    "date_to": null,
+                    "frequency_code_name": "F",
+                    "frequency_desc": "FortNightly",
+                    "frequency_id": 3,
+                    "installments": 10,
+                    "max_amount": null,
+                    "min_agg_amount": null,
+                    "min_amount": null
+                },
+                {
+                    "amount_from": 500,
+                    "amount_in_multiples_of": 1,
+                    "amount_to": null,
+                    "date_from": "2024-06-26",
+                    "date_to": null,
+                    "frequency_code_name": "W",
+                    "frequency_desc": "Weekly",
+                    "frequency_id": 2,
+                    "installments": 10,
+                    "max_amount": null,
+                    "min_agg_amount": null,
+                    "min_amount": null
+                },
+                {
+                    "amount_from": 100,
+                    "amount_in_multiples_of": 1,
+                    "amount_to": null,
+                    "date_from": "2023-11-20",
+                    "date_to": null,
+                    "frequency_code_name": "D",
+                    "frequency_desc": "Daily",
+                    "frequency_id": 1,
+                    "installments": 30,
+                    "max_amount": null,
+                    "min_agg_amount": null,
+                    "min_amount": null
+                },
+                {
+                    "amount_from": 500,
+                    "amount_in_multiples_of": 1,
+                    "amount_to": null,
+                    "date_from": "2019-09-27",
+                    "date_to": null,
+                    "frequency_code_name": "M",
+                    "frequency_desc": "Monthly",
+                    "frequency_id": 4,
+                    "installments": 12,
+                    "max_amount": null,
+                    "min_agg_amount": null,
+                    "min_amount": null
+                },
+                {
+                    "amount_from": 1500,
+                    "amount_in_multiples_of": 1,
+                    "amount_to": null,
+                    "date_from": "2019-09-27",
+                    "date_to": null,
+                    "frequency_code_name": "Q",
+                    "frequency_desc": "Quarterly",
+                    "frequency_id": 5,
+                    "installments": 4,
+                    "max_amount": null,
+                    "min_agg_amount": null,
+                    "min_amount": null
+                },
+                {
+                    "amount_from": 6000,
+                    "amount_in_multiples_of": 1,
+                    "amount_to": null,
+                    "date_from": "2019-09-27",
+                    "date_to": null,
+                    "frequency_code_name": "AN",
+                    "frequency_desc": "Annual",
+                    "frequency_id": 7,
+                    "installments": 1,
+                    "max_amount": null,
+                    "min_agg_amount": null,
+                    "min_amount": null
+                }
+            ]
+        },
+        {
+            "plan_id": 17140,
+            "sip_investment_details": [
+                {
+                    "amount_from": 100,
+                    "amount_in_multiples_of": 1,
+                    "amount_to": null,
+                    "date_from": "2024-02-01",
+                    "date_to": null,
+                    "frequency_code_name": "M",
+                    "frequency_desc": "Monthly",
+                    "frequency_id": 4,
+                    "installments": 1,
+                    "max_amount": null,
+                    "min_agg_amount": null,
+                    "min_amount": null
+                },
+                {
+                    "amount_from": 100,
+                    "amount_in_multiples_of": 1,
+                    "amount_to": null,
+                    "date_from": "2024-02-01",
+                    "date_to": null,
+                    "frequency_code_name": "Q",
+                    "frequency_desc": "Quarterly",
+                    "frequency_id": 5,
+                    "installments": 1,
+                    "max_amount": null,
+                    "min_agg_amount": null,
+                    "min_amount": null
+                },
+                {
+                    "amount_from": 100,
+                    "amount_in_multiples_of": 1,
+                    "amount_to": null,
+                    "date_from": "2024-02-01",
+                    "date_to": null,
+                    "frequency_code_name": "HY",
+                    "frequency_desc": "Half-Yearly",
+                    "frequency_id": 6,
+                    "installments": 1,
+                    "max_amount": null,
+                    "min_agg_amount": null,
+                    "min_amount": null
+                },
+                {
+                    "amount_from": 100,
+                    "amount_in_multiples_of": 1,
+                    "amount_to": null,
+                    "date_from": "2024-02-01",
+                    "date_to": null,
+                    "frequency_code_name": "AN",
+                    "frequency_desc": "Annual",
+                    "frequency_id": 7,
+                    "installments": 1,
+                    "max_amount": null,
+                    "min_agg_amount": null,
+                    "min_amount": null
+                },
+                {
+                    "amount_from": 100,
+                    "amount_in_multiples_of": 0,
+                    "amount_to": null,
+                    "date_from": "2024-02-01",
+                    "date_to": null,
+                    "frequency_code_name": "W",
+                    "frequency_desc": "Weekly",
+                    "frequency_id": 2,
+                    "installments": 1,
+                    "max_amount": null,
+                    "min_agg_amount": null,
+                    "min_amount": null
+                },
+                {
+                    "amount_from": 100,
+                    "amount_in_multiples_of": 0,
+                    "amount_to": null,
+                    "date_from": "2024-02-01",
+                    "date_to": null,
+                    "frequency_code_name": "D",
+                    "frequency_desc": "Daily",
+                    "frequency_id": 1,
+                    "installments": 1,
+                    "max_amount": null,
+                    "min_agg_amount": null,
+                    "min_amount": null
+                }
+            ]
+        }
+    ],
+    "message": "Data Fetched",
+    "meta": {
+        "has_next": false,
+        "has_prev": false,
+        "limit": 3000,
+        "page": 1,
+        "total_pages": 1,
+        "total_records": 4
+    },
+    "status": true
+}

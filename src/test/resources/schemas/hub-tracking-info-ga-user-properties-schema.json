@@ -1,0 +1,6 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "tracking_info.ga_user_properties - as documented (an array)",
+  "description": "Deliberately strict, not lenient: this schema exists specifically to prove BR-8 (HUB-SCH-05 / HUB-TYPE-04) - it must PASS against the documented sample and is EXPECTED to FAIL against the live sample, where the same field is an object instead of an array. That mismatch is the regression this schema pins, not a bug in the schema itself.",
+  "type": "array"
+}

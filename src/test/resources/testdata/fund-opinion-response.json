@@ -1,0 +1,38 @@
+{
+    "data": [
+        {
+            "is_analyst_pick": false,
+            "opinion_type_id": 1,
+            "plan_id": 40338,
+            "vr_rating": null
+        },
+        {
+            "is_analyst_pick": true,
+            "opinion_type_id": 1,
+            "plan_id": 19701,
+            "vr_rating": null
+        },
+        {
+            "is_analyst_pick": false,
+            "opinion_type_id": 1,
+            "plan_id": 17140,
+            "vr_rating": null
+        },
+        {
+            "is_analyst_pick": true,
+            "opinion_type_id": 1,
+            "plan_id": 15752,
+            "vr_rating": null
+        }
+    ],
+    "message": "Data Fetched",
+    "meta": {
+        "has_next": false,
+        "has_prev": false,
+        "limit": 100,
+        "page": 1,
+        "total_pages": 1,
+        "total_records": 4
+    },
+    "status": true
+}

@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.org</groupId>
+    <artifactId>api-automation-framework</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+    <name>API Automation Framework</name>
+    <description>Standalone Rest Assured + TestNG API automation framework. No Selenium, no Spring, no Cucumber.</description>
+
+    <properties>
+        <!-- Build -->
+        <maven.compiler.release>17</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <!-- Dependency versions -->
+        <rest-assured.version>5.5.0</rest-assured.version>
+        <testng.version>7.10.2</testng.version>
+        <jackson.version>2.17.2</jackson.version>
+        <log4j.version>2.24.1</log4j.version>
+        <extentreports.version>5.1.2</extentreports.version>
+        <poi.version>5.3.0</poi.version>
+
+        <!-- Plugin versions -->
+        <maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
+        <maven-surefire-plugin.version>3.5.2</maven-surefire-plugin.version>
+
+        <!--
+            Execution parameters, overridable from the CLI, e.g.:
+            mvn test -Denv=staging -DsuiteXmlFile=src/test/resources/suites/regression.xml
+        -->
+        <env>qa</env>
+        <suiteXmlFile>testng.xml</suiteXmlFile>
+    </properties>
+
+    <dependencies>
+
+        <!-- ============================================================
+             HTTP / API TEST DSL
+             Core engine for building requests, firing them, and
+             validating responses. Everything in the core/services/
+             assertions packages is built directly on top of this.
+        ============================================================= -->
+        <dependency>
+            <groupId>io.rest-assured</groupId>
+            <artifactId>rest-assured</artifactId>
+            <version>${rest-assured.version}</version>
+        </dependency>
+
+        <!--
+             JSON Schema (contract) validation, used by
+             assertions.SchemaValidator. Kept as a separate artifact
+             (Rest Assured's own extension) rather than pulling in a
+             generic schema library, so versions always stay aligned
+             with rest-assured itself.
+        -->
+        <dependency>
+            <groupId>io.rest-assured</groupId>
+            <artifactId>json-schema-validator</artifactId>
+            <version>${rest-assured.version}</version>
+        </dependency>
+
+        <!-- ============================================================
+             TEST RUNNER
+        ============================================================= -->
+        <dependency>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
+            <version>${testng.version}</version>
+        </dependency>
+
+        <!-- ============================================================
+             JSON <-> POJO MAPPING
+             Only jackson-databind is declared directly; it pulls in
+             jackson-core and jackson-annotations transitively at
+             matching versions, so they are not declared separately.
+        ============================================================= -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+
+        <!-- ============================================================
+             LOGGING
+        ============================================================= -->
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-api</artifactId>
+            <version>${log4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+            <version>${log4j.version}</version>
+        </dependency>
+
+        <!--
+             Bridges Apache Commons Logging to Log4j2. Rest Assured's
+             default HTTP engine (Apache HttpClient) logs through
+             commons-logging, not Log4j2 directly. Without this bridge
+             HttpClient's request/connection logs are silently dropped
+             or routed to a fallback logger, splitting log output
+             across two unrelated pipelines. This makes ALL logging in
+             the process go through the single log4j2.xml config.
+        -->
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-jcl</artifactId>
+            <version>${log4j.version}</version>
+        </dependency>
+
+        <!-- ============================================================
+             REPORTING
+        ============================================================= -->
+        <dependency>
+            <groupId>com.aventstack</groupId>
+            <artifactId>extentreports</artifactId>
+            <version>${extentreports.version}</version>
+        </dependency>
+
+        <!-- ============================================================
+             EXCEL TEST DATA (test scope only)
+             Reads the .xlsx test-data workbook driving the Portfolio
+             Planner data-driven suite - never used by main/production
+             code, so scoped to test rather than declared as a runtime
+             dependency of the framework itself.
+        ============================================================= -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>${poi.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <finalName>api-automation-framework</finalName>
+        <plugins>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven-compiler-plugin.version}</version>
+                <configuration>
+                    <release>${maven.compiler.release}</release>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${maven-surefire-plugin.version}</version>
+                <configuration>
+                    <suiteXmlFiles>
+                        <suiteXmlFile>${suiteXmlFile}</suiteXmlFile>
+                    </suiteXmlFiles>
+                    <systemPropertyVariables>
+                        <!-- Consumed by config.EnvironmentResolver -->
+                        <env>${env}</env>
+                    </systemPropertyVariables>
+                    <!--
+                        Scaffold-stage setting: no test classes exist yet, so the
+                        suite legitimately discovers zero tests. Flip this to
+                        true once real test classes are added under
+                        src/test/java, so a suite that silently finds nothing
+                        fails the build instead of reporting a false-green run.
+                    -->
+                    <failIfNoTests>false</failIfNoTests>
+                </configuration>
+            </plugin>
+
+        </plugins>
+    </build>
+
+    <profiles>
+        <!--
+             One profile per environment. Each profile only sets the
+             `env` property, which the surefire plugin above forwards
+             as a system property. All actual environment values
+             (base URL, timeouts, auth type) live in
+             src/main/resources/config/<env>.properties, loaded by
+             config.ConfigManager - never in the pom.
+        -->
+        <profile>
+            <id>dev</id>
+            <properties>
+                <env>dev</env>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>qa</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <env>qa</env>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>stage</id>
+            <properties>
+                <env>stage</env>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>prod</id>
+            <properties>
+                <env>prod</env>
+            </properties>
+        </profile>
+    </profiles>
+
+</project>

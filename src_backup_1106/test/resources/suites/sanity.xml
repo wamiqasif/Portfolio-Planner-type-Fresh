@@ -1,0 +1,34 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+    Tests tagged "sanity" - broader than smoke (adds the key negative paths
+    and structural/schema checks per module) but still fast enough to run
+    after every merge to main, before the nightly full regression. Run with:
+        mvn test -DsuiteXmlFile=src/test/resources/suites/sanity.xml
+-->
+<suite name="APIAutomationSanitySuite" parallel="classes" thread-count="3" verbose="1">
+
+    <listeners>
+        <listener class-name="com.org.apiautomation.listeners.TestLifecycleListener"/>
+        <listener class-name="com.org.apiautomation.listeners.RetryAnnotationTransformer"/>
+    </listeners>
+
+    <test name="Sanity Tests">
+        <groups>
+            <run>
+                <include name="sanity"/>
+            </run>
+        </groups>
+        <packages>
+            <package name="com.org.apitests.authentication.*"/>
+            <package name="com.org.apitests.users.*"/>
+            <package name="com.org.apitests.portfolio.*"/>
+            <package name="com.org.apitests.funds.*"/>
+            <package name="com.org.apitests.stocks.*"/>
+            <package name="com.org.apitests.transactions.*"/>
+            <package name="com.org.apitests.notifications.*"/>
+            <package name="com.org.apitests.common.*"/>
+            <package name="com.org.apitests.hub.*"/>
+        </packages>
+    </test>
+
+</suite>

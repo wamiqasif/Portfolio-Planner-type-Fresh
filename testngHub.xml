@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="Suite">
+  <listeners>
+        <listener class-name="com.org.apiautomation.listeners.TestLifecycleListener"/>
+        <listener class-name="com.org.apiautomation.listeners.RetryAnnotationTransformer"/>
+    </listeners>
+  <test thread-count="5" name="Test">
+  
+    <classes>
+      <class name="com.org.apitests.hub.HubHeaderAndMethodTests"/>
+      <class name="com.org.apitests.hub.HubNullAndEmptyTests"/>
+      <class name="com.org.apitests.hub.HubBusinessRuleTests"/>
+      <class name="com.org.apitests.hub.HubSecurityTests"/>
+      <class name="com.org.apitests.hub.HubLocalizationTests"/>
+      <class name="com.org.apitests.hub.HubSchemaAndContractTests"/>
+      <class name="com.org.apitests.hub.HubFunctionalTests"/>
+      <class name="com.org.apitests.hub.HubAuthenticationTests"/>
+      <class name="com.org.apitests.hub.HubPerformanceTests"/>
+    </classes>
+  </test> <!-- Test -->
+</suite> <!-- Suite -->

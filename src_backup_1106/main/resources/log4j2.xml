@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+
+    <Properties>
+        <Property name="LOG_PATTERN">%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n</Property>
+        <Property name="LOG_DIR">test-output/logs</Property>
+    </Properties>
+
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+        </Console>
+
+        <RollingFile name="RollingFile"
+                     fileName="${LOG_DIR}/automation.log"
+                     filePattern="${LOG_DIR}/automation-%d{yyyy-MM-dd}-%i.log.gz">
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="20MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="10"/>
+        </RollingFile>
+
+        <!-- Separate from automation.log on purpose: full request/response
+             bodies and headers are high-volume and a different audience
+             (auditing traffic) than framework/test diagnostics. A larger
+             size threshold reflects that bodies can be large. -->
+        <RollingFile name="HttpTrafficLog"
+                     fileName="${LOG_DIR}/http-traffic.log"
+                     filePattern="${LOG_DIR}/http-traffic-%d{yyyy-MM-dd}-%i.log.gz">
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="50MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="10"/>
+        </RollingFile>
+    </Appenders>
+
+    <Loggers>
+        <!-- HttpLoggingFilter's request/response/headers/body/time logging:
+             console (local dev visibility) + its own file, not
+             automation.log - kept separate so framework diagnostics aren't
+             buried in high-volume HTTP payloads and vice versa. -->
+        <Logger name="com.org.apiautomation.listeners.HttpLoggingFilter" level="DEBUG" additivity="false">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="HttpTrafficLog"/>
+        </Logger>
+
+        <!-- Framework code: verbose, everything of interest -->
+        <Logger name="com.org.apiautomation" level="DEBUG" additivity="false">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="RollingFile"/>
+        </Logger>
+
+        <!-- Test suite code: same treatment as framework code -->
+        <Logger name="com.org.apitests" level="DEBUG" additivity="false">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="RollingFile"/>
+        </Logger>
+
+        <!-- Apache HttpClient (bridged via log4j-jcl) is noisy at DEBUG; keep it at INFO -->
+        <Logger name="org.apache.http" level="INFO" additivity="false">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="RollingFile"/>
+        </Logger>
+
+        <Root level="INFO">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="RollingFile"/>
+        </Root>
+    </Loggers>
+
+</Configuration>

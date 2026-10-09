@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Hub Menu",
+  "type": "object",
+  "required": ["id", "title", "icon", "url", "is_ext_url", "action_hint"],
+  "properties": {
+    "id": { "type": "string" },
+    "title": { "type": "string" },
+    "icon": { "type": "string" },
+    "url": { "type": "string" },
+    "download_url": { "type": ["string", "null"] },
+    "is_ext_url": { "type": "boolean" },
+    "component_code": { "type": ["string", "null"] },
+    "action_hint": { "type": "string" },
+    "products": { "type": ["array", "null"] }
+  }
+}

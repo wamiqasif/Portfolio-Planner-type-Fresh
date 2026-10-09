@@ -1,0 +1,592 @@
+package com.org.apitests.portfolio;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.zip.Deflater;
+
+/**
+ * Validates WHICH funds the Planner picked in PORTFOLIO_AWARE mode, using the fund-assignment
+ * logic doc ("STEP 5: Assigning specific funds"): exclusion filters (5.2A), variant normalisation
+ * (5.2B), queue precedence A > B > C (5.3/5.5), and fund-house diversification (5.6B/5.7).
+ *
+ * <p><b>Scope / honesty about what can and cannot be checked:</b>
+ * <ul>
+ *   <li>The model's slots (categories and amounts, Steps 1-4) are not documented, so slots are
+ *       taken FROM the actual response; this validator checks the fund chosen for each slot,
+ *       not whether the slot itself is right.</li>
+ *   <li>Queue B sort metrics (1-yr alpha etc.), investment restrictions (min/max SIP) and tag
+ *       preferences are not available here. Where they could legitimately explain a different
+ *       pick, the result is reported as {@code [WARN]} (logged, not failed).</li>
+ *   <li>Interim decision (Oct 2026, pending PM): an active fund at or above 15% of the total
+ *       portfolio must not appear in the plan at all - Good or Analyst's Choice.</li>
+ * </ul>
+ *
+ * <p>Results use {@link BusinessRuleResult}: FAIL = rule broken; PASS whose rule text starts with
+ * {@code [WARN]} = needs a human look, does not fail the row.
+ */
+final class FundSelectionValidator {
+
+    /** Data access, implemented by the calling test with its row-scoped (authenticated) specs. */
+    interface Fetcher {
+        /** Body of fund-opinion-data/get-list?plan_id=...&fields=plan_id,vr_rating,opinion_type_id,is_analyst_pick */
+        String fundOpinions(List<Long> planIds);
+
+        /** Body of fund-opinion-data/get-list?is_analyst_pick=true&fields=plan_id,priority_order,tag_name (all pages) */
+        String analystPicks();
+
+        /** Body of /api/v1/funds/{planId} */
+        String fundDetails(long planId);
+
+        /** Body of /api/v1/funds/filter/{encodedFilter} */
+        String fundsByFilter(String encodedFilter);
+    }
+
+    static final double CONCENTRATION_LIMIT_PERCENT = 15.0;
+    static final int GOOD_OPINION_TYPE_ID = 1;
+    static final String LARGE_CAP_INDEX_SLOT = "large cap index";
+    static final String GROWTH_SLOT = "growth";
+    private static final String WARN = "[WARN] ";
+    /** PRD change-fund mapping lists "BUY list and Analyst's Choice" for these two categories. */
+    private static final Set<String> BUY_LIST_CATEGORIES = Set.of("conservative hybrid", "dynamic asset allocation");
+
+    /** Logic doc 5.4.2: Flexicap / Value / Large & Midcap / Multicap / Focused form one 'Growth' slot. */
+    private static final Set<String> GROWTH_CATEGORIES = Set.of(
+            "flexi cap", "flexicap", "large & midcap", "large & mid cap", "large and mid cap",
+            "multi cap", "multicap", "value oriented", "value", "focused");
+
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final Pattern OWN_COUNT = Pattern.compile("own\\s*(?:<b>)?\\s*(\\d+)\\s*fund", Pattern.CASE_INSENSITIVE);
+
+    /** Analyst's Choice list is global, so it is fetched once per run. */
+    private static volatile Map<Long, AcInfo> acListCache;
+
+    private FundSelectionValidator() {
+    }
+
+    record AcInfo(Integer priority, List<String> tags) {
+        boolean watchlisted() {
+            return tags.stream().anyMatch(t -> t.toLowerCase().contains("watch"));
+        }
+    }
+
+    /** One fund as seen by the logic: a held plan, a normalised Direct-Growth variant, or a recommended plan. */
+    static final class Fund {
+        long planId;
+        long fundId;
+        String name;
+        String category;
+        boolean index;
+        boolean etf;
+        boolean fof;
+        boolean closedEnd;
+        boolean solutionOriented;
+        boolean directGrowth;
+        Long amcId;
+        Integer rating;
+        Integer opinionTypeId;
+        boolean ac;
+        Integer acPriority;
+        boolean watchlisted;
+        double units;
+        String heldAs;
+        Integer heldPlanRating;
+        Integer heldPlanOpinionTypeId;
+        String classification;
+        String heldPlanClassification;
+        JsonNode raw;
+        /** Row of fund-opinion-data/get-list for this plan (Queue B sort metrics live here). */
+        JsonNode opinionRaw;
+        int primaryCategoryId;
+        boolean heldPlanAc;
+        String exclusion;
+
+        boolean good() {
+            return opinionTypeId != null && opinionTypeId == GOOD_OPINION_TYPE_ID;
+        }
+
+        String slot() {
+            String c = category == null ? "" : category.toLowerCase().trim();
+            if (index && c.equals("large cap")) {
+                return LARGE_CAP_INDEX_SLOT;
+            }
+            if (GROWTH_CATEGORIES.contains(c)) {
+                return GROWTH_SLOT;
+            }
+            return c;
+        }
+
+        String label() {
+            return name + " (plan " + planId + (heldAs != null ? ", held as " + heldAs : "") + ")";
+        }
+    }
+
+    record Recommended(Fund fund, boolean isOwned, double firstMonthAmount) {
+    }
+
+    // =============================================================================================
+    static List<BusinessRuleResult> validate(String portfolioBody, String plannerBody, Fetcher fetcher, String scenario) {
+        List<BusinessRuleResult> out = new ArrayList<>();
+        JsonNode portfolio = read(portfolioBody);
+        JsonNode planner = read(plannerBody);
+        Map<Long, AcInfo> acList = acList(fetcher);
+
+        // ---- held funds (only units > 0)
+        List<Fund> held = new ArrayList<>();
+        Map<Long, Double> weightByFund = new HashMap<>();
+        Map<Long, String> skippedHolding = new HashMap<>();
+        JsonNode fundData = portfolio.path("data").path("fund-data");
+        if (fundData.isObject()) {
+            for (JsonNode entry : fundData) {
+                Fund f = parseFund(entry.path("plan-details"));
+                f.units = entry.path("analysis-data").path("total_units").asDouble(0);
+                if (f.units <= 0 && !Boolean.parseBoolean(System.getProperty("selection.redeemedCountsAsHeld", "false"))) {
+                    skippedHolding.putIfAbsent(f.fundId, "held with 0 units (fully redeemed): " + f.name);
+                    continue;
+                }
+                held.add(f);
+                weightByFund.merge(f.fundId, entry.path("analysis-data").path("weightage").asDouble(0), Double::sum);
+            }
+        }
+
+        // held plans' own opinion/rating (opinion API), used for the held-plan rating check
+        enrich(held, acList, fetcher);
+
+        // ---- 5.2B variant normalisation: every held fund is represented by its Direct-Growth plan
+        Map<Long, Fund> candidateByFund = new LinkedHashMap<>();
+        for (Fund h : held) {
+            if (candidateByFund.containsKey(h.fundId)) {
+                continue;
+            }
+            if (h.etf) {
+                continue; // ETFs are always excluded (5.2A) and have no Direct-Growth plan
+            }
+            Fund dg = h.directGrowth ? h : directGrowthOf(h, fetcher);
+            if (dg == null) {
+                skippedHolding.put(h.fundId, "Direct-Growth plan not resolvable for " + h.name);
+                out.add(BusinessRuleResult.of(true, WARN + "Could not resolve Direct-Growth variant (5.2B) - fund not validated",
+                        scenario, "Direct-Growth plan of fund_id " + h.fundId, h.label()));
+                continue;
+            }
+            if (dg != h) {
+                dg.heldAs = h.name;
+                dg.heldPlanRating = h.rating;
+                dg.heldPlanOpinionTypeId = h.opinionTypeId;
+                dg.heldPlanClassification = h.classification;
+                dg.heldPlanAc = h.ac;
+            }
+            candidateByFund.put(h.fundId, dg);
+            skippedHolding.remove(h.fundId);
+        }
+
+        // ---- opinions + AC info for candidates
+        enrich(new ArrayList<>(candidateByFund.values()), acList, fetcher);
+
+        // ---- recommended funds
+        List<Recommended> recommended = recommendedFunds(planner, fetcher, acList);
+        if (recommended.isEmpty()) {
+            out.add(BusinessRuleResult.of(true, WARN + "No recommended funds found in response - selection not validated", scenario, "funds", "none"));
+            return out;
+        }
+        Set<String> slotsInPlan = recommended.stream().map(r -> r.fund().slot()).collect(Collectors.toSet());
+
+        // ---- 5.2A exclusion filters
+        for (Fund c : candidateByFund.values()) {
+            c.exclusion = exclusionReason(c, weightByFund.getOrDefault(c.fundId, 0.0), slotsInPlan);
+        }
+
+        // ---- slot by slot, in descending order of amount (5.5)
+        List<Recommended> ordered = new ArrayList<>(recommended);
+        ordered.sort(Comparator.comparingDouble(Recommended::firstMonthAmount).reversed());
+        Set<Long> used = new HashSet<>();
+        int ownedExpected = 0;
+        int redeemedShownAsOwned = 0;
+
+        for (Recommended r : ordered) {
+            Fund rf = r.fund();
+            String slot = rf.slot();
+            Fund heldCandidate = candidateByFund.get(rf.fundId);
+            boolean heldEligible = heldCandidate != null && heldCandidate.exclusion == null;
+
+            // (1) an excluded held fund must not be recommended
+            if (heldCandidate != null && heldCandidate.exclusion != null) {
+                boolean concentration = heldCandidate.exclusion.contains("% of total portfolio");
+                if (rf.ac && !concentration) {
+                    // PM decision (Oct 2026): an excluded held fund MAY come back through the Analyst's Choice
+                    // master list (Queue C) and must then show "Already yours" and count in "You already own N".
+                    ownedExpected++;
+                    out.add(BusinessRuleResult.of(r.isOwned(),
+                            "Held fund that came back via Analyst's Choice master list must show 'Already yours' (PM decision)",
+                            scenario, "is_owned=true for " + rf.label() + " [held as " + (heldCandidate.heldAs != null ? heldCandidate.heldAs : rf.name)
+                                    + "; excluded from portfolio pool: " + heldCandidate.exclusion + "]",
+                            "is_owned=" + r.isOwned()));
+                } else {
+                    // 15% concentration (interim decision) or not Analyst's Choice: must never be in the plan
+                    out.add(BusinessRuleResult.of(false, "Excluded portfolio fund must not be recommended (5.2A)", scenario,
+                            "not in plan (" + heldCandidate.exclusion + ")", rf.label()));
+                    used.add(rf.fundId);
+                    continue;
+                }
+            }
+
+            // (2) is_owned must follow 5.2B / PRD 11.7 (variants count as owned)
+            if (heldEligible) {
+                ownedExpected++;
+                out.add(BusinessRuleResult.of(r.isOwned(),
+                        "is_owned must be true for a fund picked from the portfolio, incl. Regular/IDCW variants (5.2B, PRD 11.7)",
+                        scenario, "is_owned=true for " + rf.label() + (heldCandidate.heldAs != null ? " [held as " + heldCandidate.heldAs + "]" : ""),
+                        "is_owned=" + r.isOwned()));
+            } else if (heldCandidate == null && r.isOwned()) {
+                String why = skippedHolding.get(rf.fundId);
+                if (why != null && why.startsWith("held with 0 units")) {
+                    out.add(BusinessRuleResult.of(false,
+                            "Fully redeemed fund (0 units) must not be shown as 'Already yours' (PM confirmed)", scenario,
+                            "is_owned=false for " + rf.label(), "is_owned=true; " + why));
+                    redeemedShownAsOwned++;
+                } else if (why != null) {
+                    out.add(BusinessRuleResult.of(true, WARN + "Ownership not verifiable: " + why, scenario, "-", rf.label()));
+                } else {
+                    out.add(BusinessRuleResult.of(false, "is_owned must be false for a fund the investor does not hold", scenario,
+                            "is_owned=false for " + rf.label(), "is_owned=true"));
+                }
+            }
+
+            // (3) queue precedence A > B > C
+            List<Fund> queueA = queue(candidateByFund.values(), slot, used, true);
+            List<Fund> queueB = queue(candidateByFund.values(), slot, used, false);
+            if (heldEligible && heldCandidate.ac) {
+                Fund better = queueA.stream().filter(a -> a.fundId != rf.fundId)
+                        .filter(a -> priority(a) < priority(heldCandidate)).findFirst().orElse(null);
+                out.add(better == null
+                        ? BusinessRuleResult.of(true, "Queue A pick for slot '" + slot + "'", scenario, "held AC fund", rf.label())
+                        : BusinessRuleResult.of(true, WARN + "Higher-priority held AC fund exists for slot '" + slot
+                                + "' (tag preference / restriction / fund-house rule may explain)", scenario, better.label(), rf.label()));
+            } else if (heldEligible) {
+                List<Fund> aAlternatives = queueA.stream().filter(a -> a.fundId != rf.fundId).toList();
+                out.add(BusinessRuleResult.of(aAlternatives.isEmpty(),
+                        "Queue A (held AC) must win over Queue B (held Good) for slot '" + slot + "' (5.3/5.5)", scenario,
+                        aAlternatives.isEmpty() ? "Queue B pick allowed" : names(aAlternatives) + " (unless restriction/fund-house rule blocks it)",
+                        rf.label()));
+                if (aAlternatives.isEmpty() && queueB.size() > 1) {
+                    out.add(QueueBSort.check(queueB, heldCandidate, slot, scenario));
+                }
+            } else {
+                List<Fund> skipped = new ArrayList<>(queueA);
+                skipped.addAll(queueB);
+                out.add(BusinessRuleResult.of(skipped.isEmpty(),
+                        "Held eligible funds must be used before Analyst's Choice master list for slot '" + slot + "' (5.5)", scenario,
+                        skipped.isEmpty() ? "Queue C pick allowed" : names(skipped) + " (unless restriction/fund-house rule blocks it)",
+                        rf.label()));
+                boolean buyListCategory = BUY_LIST_CATEGORIES.contains(slot);
+                if (!rf.ac && buyListCategory && !rf.watchlisted && !rf.etf) {
+                    out.add(BusinessRuleResult.of(true, WARN + "Non-Analyst's Choice fund for '" + slot
+                            + "' - allowed only if this category also uses the BUY list (PRD change-fund mapping); confirm with dev",
+                            scenario, "Analyst's Choice or BUY list fund", rf.label()));
+                } else {
+                    out.add(BusinessRuleResult.of(rf.ac && !rf.watchlisted && !rf.etf,
+                            "Fund not in portfolio must be a non-watchlisted, non-ETF Analyst's Choice fund (Queue C, 5.3)", scenario,
+                            "AC=true, watchlisted=false, ETF=false",
+                            "AC=" + rf.ac + ", watchlisted=" + rf.watchlisted + ", ETF=" + rf.etf + " - " + rf.label()));
+                }
+            }
+            used.add(rf.fundId);
+        }
+
+        // (4) count sentence (PRD 11.5)
+        out.add(countNote(planner, ownedExpected, scenario));
+
+        // (5) fund-house diversification (5.6B / 5.7)
+        out.addAll(fundHouseRules(recommended, scenario));
+        return out;
+    }
+
+    // =============================================================================================
+    static String exclusionReason(Fund c, double combinedWeight, Set<String> slotsInPlan) {
+        if (!c.ac && !c.good()) {
+            return "opinion is neither Analyst's Choice nor Good (opinion_type_id=" + c.opinionTypeId + ")";
+        }
+        if (c.etf) {
+            return "ETF";
+        }
+        if (c.closedEnd) {
+            return "closed-end fund";
+        }
+        if (c.solutionOriented) {
+            return "solution-oriented (children/retirement) fund";
+        }
+        if (c.index && !(LARGE_CAP_INDEX_SLOT.equals(c.slot()) && slotsInPlan.contains(LARGE_CAP_INDEX_SLOT))) {
+            return "index fund and the plan has no matching index slot";
+        }
+        if (c.good() && !c.ac && c.rating != null && c.rating >= 1 && c.rating <= 3) {
+            return "Good but not AC and rated " + c.rating + " star";
+        }
+        // pseudocode applies exclusions to the HELD plan before adding its Direct-Growth variant
+        boolean heldPlanGood = c.heldPlanOpinionTypeId != null
+                ? c.heldPlanOpinionTypeId == GOOD_OPINION_TYPE_ID
+                : "good".equalsIgnoreCase(c.heldPlanClassification); // opinion API often has no row for Regular/IDCW plans
+        if (c.heldAs != null && heldPlanGood
+                && !c.heldPlanAc && c.heldPlanRating != null && c.heldPlanRating >= 1 && c.heldPlanRating <= 3) {
+            return "held plan (" + c.heldAs + ") is Good but not AC and rated " + c.heldPlanRating + " star";
+        }
+        if (c.ac && c.watchlisted) {
+            return "Analyst's Choice but WATCHLISTED";
+        }
+        if (!c.index && !c.etf && !c.fof && combinedWeight >= CONCENTRATION_LIMIT_PERCENT) {
+            return String.format("active fund is %.2f%% of total portfolio (>= %.0f%%)", combinedWeight, CONCENTRATION_LIMIT_PERCENT);
+        }
+        return null;
+    }
+
+    private static List<Fund> queue(Iterable<Fund> candidates, String slot, Set<Long> used, boolean analystsChoice) {
+        List<Fund> q = new ArrayList<>();
+        for (Fund c : candidates) {
+            if (c.exclusion == null && !used.contains(c.fundId) && slot.equals(c.slot())
+                    && (analystsChoice ? c.ac : (!c.ac && c.good()))) {
+                q.add(c);
+            }
+        }
+        q.sort(Comparator.comparingInt(FundSelectionValidator::priority));
+        return q;
+    }
+
+    private static int priority(Fund f) {
+        return f.acPriority == null ? Integer.MAX_VALUE : f.acPriority;
+    }
+
+    private static BusinessRuleResult countNote(JsonNode planner, int ownedExpected, String scenario) {
+        JsonNode note = planner.path("data").path("plan_note_data");
+        String text = note.path("text_fmt").isNull() ? "" : note.path("text_fmt").asText("");
+        Matcher m = OWN_COUNT.matcher(text);
+        Integer shown = m.find() ? Integer.valueOf(m.group(1)) : null;
+        if (ownedExpected == 0) {
+            return BusinessRuleResult.of(shown == null, "'You already own N funds' must not be shown when no portfolio fund is picked (PRD 11.5)",
+                    scenario, "no 'already own' count", text.isEmpty() ? "<none>" : text);
+        }
+        return BusinessRuleResult.of(shown != null && shown == ownedExpected,
+                "'You already own N fund(s)' must equal the number of funds picked from the portfolio (PRD 11.5)",
+                scenario, ownedExpected, shown == null ? "<no count shown>" : shown);
+    }
+
+    private static List<BusinessRuleResult> fundHouseRules(List<Recommended> recs, String scenario) {
+        List<BusinessRuleResult> out = new ArrayList<>();
+        int n = recs.size();
+        Map<Long, List<Recommended>> byAmc = new HashMap<>();
+        for (Recommended r : recs) {
+            if (!r.fund().index && r.fund().amcId != null) {
+                byAmc.computeIfAbsent(r.fund().amcId, k -> new ArrayList<>()).add(r);
+            }
+        }
+        List<Long> duplicated = byAmc.entrySet().stream().filter(e -> e.getValue().size() > 1).map(Map.Entry::getKey).toList();
+        if (n <= 4) {
+            out.add(BusinessRuleResult.of(duplicated.isEmpty(), "Plan with <=4 funds must not repeat a fund house, index funds exempt (5.6B)",
+                    scenario, "no repeated AMC", duplicated.isEmpty() ? "none" : amcText(duplicated, byAmc)));
+        } else {
+            out.add(BusinessRuleResult.of(duplicated.size() <= 1, "Plan with >=5 funds may duplicate at most one fund house (5.6B rule 1)",
+                    scenario, "<=1 duplicated AMC", duplicated.isEmpty() ? "none" : amcText(duplicated, byAmc)));
+            double total = recs.stream().mapToDouble(Recommended::firstMonthAmount).sum();
+            for (Long amc : duplicated) {
+                double share = byAmc.get(amc).stream().mapToDouble(Recommended::firstMonthAmount).sum();
+                out.add(BusinessRuleResult.of(total <= 0 || share / total <= 0.5,
+                        "One fund house must not exceed 50% of first-month total (5.6B rule 2)", scenario,
+                        "<= 50%", String.format("AMC %d = %.1f%%", amc, total <= 0 ? 0 : share * 100 / total)));
+            }
+        }
+        for (Long amc : duplicated) {
+            Set<String> slots = new HashSet<>();
+            boolean sameSlot = false;
+            for (Recommended r : byAmc.get(amc)) {
+                sameSlot |= !slots.add(r.fund().slot());
+            }
+            out.add(BusinessRuleResult.of(!sameSlot, "No fund-house repetition within the same category slot (5.6B rule 3)",
+                    scenario, "different AMCs within a slot", amcText(List.of(amc), byAmc)));
+        }
+        return out;
+    }
+
+    private static String amcText(List<Long> amcs, Map<Long, List<Recommended>> byAmc) {
+        return amcs.stream().map(a -> "AMC " + a + ": " + byAmc.get(a).stream().map(r -> r.fund().name).collect(Collectors.joining(", ")))
+                .collect(Collectors.joining("; "));
+    }
+
+    private static String names(List<Fund> funds) {
+        return funds.stream().map(Fund::label).collect(Collectors.joining(", "));
+    }
+
+    // =============================================================================================
+    private static List<Recommended> recommendedFunds(JsonNode planner, Fetcher fetcher, Map<Long, AcInfo> acList) {
+        List<JsonNode> nodes = new ArrayList<>();
+        collectFundNodes(planner.path("data").path("funds_data"), nodes);
+        List<Recommended> out = new ArrayList<>();
+        Set<Long> seen = new HashSet<>();
+        List<Fund> funds = new ArrayList<>();
+        for (JsonNode n : nodes) {
+            long planId = n.path("plan_data").path("plan_id").asLong(0);
+            if (planId == 0 || !seen.add(planId)) {
+                continue;
+            }
+            JsonNode detail = read(fetcher.fundDetails(planId)).path("data").path(0);
+            Fund f = detail.isMissingNode() ? new Fund() : parseFund(detail);
+            f.planId = planId;
+            if (f.name == null) {
+                f.name = n.path("plan_data").path("name").asText("?");
+            }
+            funds.add(f);
+            out.add(new Recommended(f, n.path("is_owned").asBoolean(false), n.path("first_month_amount").asDouble(0)));
+        }
+        enrich(funds, acList, fetcher);
+        return out;
+    }
+
+    /** Finds every object under funds_data that carries plan_data + is_owned (handles income/growth sections). */
+    private static void collectFundNodes(JsonNode node, List<JsonNode> out) {
+        if (node == null || node.isMissingNode() || node.isNull()) {
+            return;
+        }
+        if (node.isObject() && node.has("plan_data") && node.has("is_owned")) {
+            out.add(node);
+            return;
+        }
+        if (node.isObject() || node.isArray()) {
+            for (JsonNode child : node) {
+                collectFundNodes(child, out);
+            }
+        }
+    }
+
+    private static void enrich(List<Fund> funds, Map<Long, AcInfo> acList, Fetcher fetcher) {
+        if (funds.isEmpty()) {
+            return;
+        }
+        List<Long> ids = funds.stream().map(f -> f.planId).distinct().toList();
+        Map<Long, JsonNode> opinions = new HashMap<>();
+        for (JsonNode o : read(fetcher.fundOpinions(ids)).path("data")) {
+            opinions.put(o.path("plan_id").asLong(), o);
+        }
+        for (Fund f : funds) {
+            JsonNode o = opinions.get(f.planId);
+            if (o != null) {
+                if (!o.path("opinion_type_id").isNull() && !o.path("opinion_type_id").isMissingNode()) {
+                    f.opinionTypeId = o.path("opinion_type_id").asInt();
+                }
+                if (!o.path("vr_rating").isNull() && !o.path("vr_rating").isMissingNode()) {
+                    f.rating = o.path("vr_rating").asInt();
+                }
+                f.ac = o.path("is_analyst_pick").asBoolean(false);
+                f.opinionRaw = o;
+            }
+            AcInfo ac = acList.get(f.planId);
+            if (ac != null) {
+                f.ac = true;
+                f.acPriority = ac.priority();
+                f.watchlisted = ac.watchlisted();
+            }
+        }
+    }
+
+    private static Fund directGrowthOf(Fund held, Fetcher fetcher) {
+        for (String filter : List.of(
+                "{\"filters\":[{\"fund_id\":{\"=\":[" + held.fundId + "]}}]}",
+                "{\"filters\":[{\"reg_plan_id\":{\"=\":[" + held.planId + "]}}]}")) {
+            try {
+                for (JsonNode p : read(fetcher.fundsByFilter(encodeFilter(filter))).path("data")) {
+                    Fund f = parseFund(p);
+                    if (f.fundId == held.fundId && f.directGrowth) {
+                        return f;
+                    }
+                }
+            } catch (RuntimeException ignored) {
+                // try the next filter shape
+            }
+        }
+        return null;
+    }
+
+    static Fund parseFund(JsonNode d) {
+        Fund f = new Fund();
+        f.planId = d.path("plan_id").asLong(0);
+        f.fundId = d.path("fund_id").asLong(0);
+        f.name = text(d, "short_name", text(d, "composite_short_name", text(d, "scheme_name", null)));
+        String cat = text(d, "secondary_category_name", null);
+        if (cat == null) {
+            String full = text(d, "category_name", "");
+            cat = full.contains(":") ? full.substring(full.indexOf(':') + 1).trim() : full;
+        }
+        f.category = cat;
+        f.index = d.path("is_index_fund").asBoolean(false);
+        f.etf = d.path("is_etf_plan").asBoolean(false);
+        f.fof = d.path("is_fof").asBoolean(false);
+        String maturity = text(d, "maturity_date", null);
+        f.closedEnd = maturity != null && !maturity.isBlank();
+        String fullCat = text(d, "category_name", "").toLowerCase();
+        f.solutionOriented = fullCat.contains("solution") || fullCat.contains("children") || fullCat.contains("retirement");
+        boolean growthOption = "growth".equalsIgnoreCase(text(d, "plan_name", "")) || d.path("cumulative").asBoolean(false);
+        f.directGrowth = d.path("is_direct_plan").asBoolean(false) && growthOption;
+        f.amcId = d.path("amc_id").isMissingNode() || d.path("amc_id").isNull() ? null : d.path("amc_id").asLong();
+        f.rating = d.path("rating").isMissingNode() || d.path("rating").isNull() ? null : d.path("rating").asInt();
+        f.classification = text(d, "fund_classification_name", null);
+        f.raw = d;
+        f.primaryCategoryId = d.path("primary_category_id").asInt(0);
+        return f;
+    }
+
+    private static Map<Long, AcInfo> acList(Fetcher fetcher) {
+        Map<Long, AcInfo> cached = acListCache;
+        if (cached != null) {
+            return cached;
+        }
+        Map<Long, AcInfo> map = new HashMap<>();
+        for (JsonNode e : read(fetcher.analystPicks()).path("data")) {
+            List<String> tags = new ArrayList<>();
+            for (JsonNode t : e.path("tag_name")) {
+                tags.add(t.asText());
+            }
+            Integer prio = e.path("priority_order").isNull() || e.path("priority_order").isMissingNode() ? null : e.path("priority_order").asInt();
+            map.put(e.path("plan_id").asLong(), new AcInfo(prio, tags));
+        }
+        acListCache = map;
+        return map;
+    }
+
+    /** Same encoding as the backend's filter URLs: zlib-deflate, then URL-safe Base64 without padding. */
+    static String encodeFilter(String json) {
+        Deflater deflater = new Deflater();
+        deflater.setInput(json.getBytes(StandardCharsets.UTF_8));
+        deflater.finish();
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        byte[] buffer = new byte[512];
+        while (!deflater.finished()) {
+            int n = deflater.deflate(buffer);
+            bytes.write(buffer, 0, n);
+        }
+        deflater.end();
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes.toByteArray());
+    }
+
+    private static String text(JsonNode d, String field, String fallback) {
+        JsonNode v = d.path(field);
+        return v.isMissingNode() || v.isNull() ? fallback : v.asText();
+    }
+
+    private static JsonNode read(String body) {
+        try {
+            String json = body == null ? "{}" : (body.startsWith("\uFEFF") ? body.substring(1) : body);
+            return MAPPER.readTree(json.isBlank() ? "{}" : json);
+        } catch (Exception e) {
+            throw new IllegalStateException("Fund selection validator: unparseable JSON - " + e.getMessage(), e);
+        }
+    }
+}

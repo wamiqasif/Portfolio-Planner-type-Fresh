@@ -1,0 +1,319 @@
+{
+    "data": [
+        {
+            "plan_id": 43839,
+            "priority_order": 3,
+            "tag_name": [
+                "Diversified"
+            ]
+        },
+        {
+            "plan_id": 42483,
+            "priority_order": 2,
+            "tag_name": null
+        },
+        {
+            "plan_id": 41574,
+            "priority_order": 9,
+            "tag_name": [
+                "Index - Large"
+            ]
+        },
+        {
+            "plan_id": 40564,
+            "priority_order": 4,
+            "tag_name": null
+        },
+        {
+            "plan_id": 40105,
+            "priority_order": 4,
+            "tag_name": null
+        },
+        {
+            "plan_id": 38261,
+            "priority_order": 5,
+            "tag_name": null
+        },
+        {
+            "plan_id": 38387,
+            "priority_order": 1,
+            "tag_name": null
+        },
+        {
+            "plan_id": 37843,
+            "priority_order": 5,
+            "tag_name": null
+        },
+        {
+            "plan_id": 36491,
+            "priority_order": 14,
+            "tag_name": [
+                "Index - Junior"
+            ]
+        },
+        {
+            "plan_id": 28632,
+            "priority_order": 2,
+            "tag_name": null
+        },
+        {
+            "plan_id": 31318,
+            "priority_order": 2,
+            "tag_name": [
+                "Diversified"
+            ]
+        },
+        {
+            "plan_id": 30710,
+            "priority_order": 12,
+            "tag_name": [
+                "ETF - Large"
+            ]
+        },
+        {
+            "plan_id": 30604,
+            "priority_order": 4,
+            "tag_name": null
+        },
+        {
+            "plan_id": 28229,
+            "priority_order": 3,
+            "tag_name": null
+        },
+        {
+            "plan_id": 28168,
+            "priority_order": 2,
+            "tag_name": null
+        },
+        {
+            "plan_id": 19701,
+            "priority_order": 2,
+            "tag_name": [
+                "Value",
+                "International",
+                "Diversified"
+            ]
+        },
+        {
+            "plan_id": 17074,
+            "priority_order": 1,
+            "tag_name": [
+                "Conservative"
+            ]
+        },
+        {
+            "plan_id": 17134,
+            "priority_order": 3,
+            "tag_name": null
+        },
+        {
+            "plan_id": 16586,
+            "priority_order": 1,
+            "tag_name": null
+        },
+        {
+            "plan_id": 16719,
+            "priority_order": 10,
+            "tag_name": [
+                "Diversified",
+                "Value"
+            ]
+        },
+        {
+            "plan_id": 16617,
+            "priority_order": 6,
+            "tag_name": null
+        },
+        {
+            "plan_id": 16554,
+            "priority_order": 4,
+            "tag_name": null
+        },
+        {
+            "plan_id": 16337,
+            "priority_order": 6,
+            "tag_name": [
+                "Active"
+            ]
+        },
+        {
+            "plan_id": 16324,
+            "priority_order": 9,
+            "tag_name": [
+                "Growth",
+                "Focused"
+            ]
+        },
+        {
+            "plan_id": 16322,
+            "priority_order": 11,
+            "tag_name": [
+                "Value",
+                "Diversified"
+            ]
+        },
+        {
+            "plan_id": 16493,
+            "priority_order": 5,
+            "tag_name": [
+                "Diversified"
+            ]
+        },
+        {
+            "plan_id": 16454,
+            "priority_order": 3,
+            "tag_name": [
+                "Diversified"
+            ]
+        },
+        {
+            "plan_id": 16378,
+            "priority_order": 8,
+            "tag_name": [
+                "Growth",
+                "Diversified"
+            ]
+        },
+        {
+            "plan_id": 16198,
+            "priority_order": 8,
+            "tag_name": [
+                "Active"
+            ]
+        },
+        {
+            "plan_id": 16192,
+            "priority_order": 7,
+            "tag_name": null
+        },
+        {
+            "plan_id": 16151,
+            "priority_order": 3,
+            "tag_name": null
+        },
+        {
+            "plan_id": 16233,
+            "priority_order": 10,
+            "tag_name": [
+                "Index - Large"
+            ]
+        },
+        {
+            "plan_id": 16167,
+            "priority_order": 1,
+            "tag_name": null
+        },
+        {
+            "plan_id": 16160,
+            "priority_order": 1,
+            "tag_name": [
+                "Diversified"
+            ]
+        },
+        {
+            "plan_id": 16068,
+            "priority_order": 4,
+            "tag_name": null
+        },
+        {
+            "plan_id": 16026,
+            "priority_order": 7,
+            "tag_name": [
+                "Value"
+            ]
+        },
+        {
+            "plan_id": 16008,
+            "priority_order": 6,
+            "tag_name": [
+                "Diversified"
+            ]
+        },
+        {
+            "plan_id": 16000,
+            "priority_order": 6,
+            "tag_name": null
+        },
+        {
+            "plan_id": 15866,
+            "priority_order": 4,
+            "tag_name": null
+        },
+        {
+            "plan_id": 15868,
+            "priority_order": 1,
+            "tag_name": null
+        },
+        {
+            "plan_id": 15822,
+            "priority_order": 5,
+            "tag_name": [
+                "Diversified",
+                "Value"
+            ]
+        },
+        {
+            "plan_id": 15815,
+            "priority_order": 1,
+            "tag_name": null
+        },
+        {
+            "plan_id": 15841,
+            "priority_order": 5,
+            "tag_name": [
+                "Active"
+            ]
+        },
+        {
+            "plan_id": 15752,
+            "priority_order": 2,
+            "tag_name": null
+        },
+        {
+            "plan_id": 15830,
+            "priority_order": 11,
+            "tag_name": [
+                "Index - Large"
+            ]
+        },
+        {
+            "plan_id": 15748,
+            "priority_order": 2,
+            "tag_name": null
+        },
+        {
+            "plan_id": 15800,
+            "priority_order": 3,
+            "tag_name": null
+        },
+        {
+            "plan_id": 15793,
+            "priority_order": 3,
+            "tag_name": null
+        },
+        {
+            "plan_id": 1545,
+            "priority_order": 15,
+            "tag_name": [
+                "ETF - Junior"
+            ]
+        },
+        {
+            "plan_id": 1171,
+            "priority_order": 13,
+            "tag_name": [
+                "ETF - Large"
+            ]
+        }
+    ],
+    "message": "Data Fetched",
+    "meta": {
+        "has_next": false,
+        "has_prev": false,
+        "limit": 100,
+        "page": 1,
+        "total_pages": 1,
+        "total_records": 50
+    },
+    "status": true
+}

@@ -1,0 +1,32 @@
+[
+  {
+    "scenario": "Portfolio Aware - Growth",
+    "investorId": "87683240",
+    "labelId": "89660240",
+    "userId": "123",
+    "goalType": "GROWTH",
+    "txnOptions": "SIPLUMPSUM",
+    "durationType": "y",
+    "investmentDuration": 15,
+    "monthlyAmount": 50000,
+    "lumpsumAmount": 10000000,
+    "riskProfileId": 2,
+    "annualIncomeRange": 2,
+    "awareType": "PORTFOLIO_AWARE"
+  },
+  {
+    "scenario": "Fresh - Growth",
+    "investorId": "87681387",
+    "labelId": "89659221",
+    "userId": "81843616",
+    "goalType": "GROWTH",
+    "txnOptions": "SIPLUMPSUM",
+    "durationType": "y",
+    "investmentDuration": 15,
+    "monthlyAmount": 50000,
+    "lumpsumAmount": 10000000,
+    "riskProfileId": 2,
+    "annualIncomeRange": 2,
+    "awareType": "FRESH"
+  }
+]

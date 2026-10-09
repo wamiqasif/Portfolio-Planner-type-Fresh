@@ -1,0 +1,34 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+    Fastest tier: the small set of tests tagged "smoke" - one or two
+    critical-path checks per verb per module. Gates every PR; must stay
+    fast and rock-solid. Run with:
+        mvn test -DsuiteXmlFile=src/test/resources/suites/smoke.xml
+-->
+<suite name="APIAutomationSmokeSuite" parallel="classes" thread-count="3" verbose="1">
+
+    <listeners>
+        <listener class-name="com.org.apiautomation.listeners.TestLifecycleListener"/>
+        <listener class-name="com.org.apiautomation.listeners.RetryAnnotationTransformer"/>
+    </listeners>
+
+    <test name="Smoke Tests">
+        <groups>
+            <run>
+                <include name="smoke"/>
+            </run>
+        </groups>
+        <packages>
+            <package name="com.org.apitests.authentication.*"/>
+            <package name="com.org.apitests.users.*"/>
+            <package name="com.org.apitests.portfolio.*"/>
+            <package name="com.org.apitests.funds.*"/>
+            <package name="com.org.apitests.stocks.*"/>
+            <package name="com.org.apitests.transactions.*"/>
+            <package name="com.org.apitests.notifications.*"/>
+            <package name="com.org.apitests.common.*"/>
+            <package name="com.org.apitests.hub.*"/>
+        </packages>
+    </test>
+
+</suite>

@@ -1,0 +1,638 @@
+{
+    "status": true,
+    "data": {
+        "inpage_title": "The Hub",
+        "hub": [
+            {
+                "id": "profile",
+                "title": "Profile",
+                "menus": [
+                    {
+                        "id": "account_details",
+                        "title": "Account Details",
+                        "icon": "/assets/images/hub_icon/account_details.svg",
+                        "url": "/myaccount/",
+                        "download_url": null,
+                        "is_ext_url": false,
+                        "component_code": null,
+                        "action_hint": "View and edit your account details",
+                        "products": null
+                    },
+                    {
+                        "id": "subscription_details",
+                        "title": "Subscription Details",
+                        "icon": "/assets/images/hub_icon/subscription_details.svg",
+                        "url": "/mysubscription/",
+                        "download_url": null,
+                        "is_ext_url": false,
+                        "component_code": null,
+                        "action_hint": "View your subscription details",
+                        "products": null
+                    },
+                    {
+                        "id": "portfolio_settings",
+                        "title": "Portfolio Settings",
+                        "icon": "/assets/images/hub_icon/portfolio_settings.svg",
+                        "url": "/settings/#portfolio",
+                        "download_url": null,
+                        "is_ext_url": false,
+                        "component_code": null,
+                        "action_hint": "Manage your portfolio settings",
+                        "products": null
+                    },
+                    {
+                        "id": "app_settings",
+                        "title": "App Settings",
+                        "icon": "/assets/images/hub_icon/app_settings.svg",
+                        "url": "/settings/#app",
+                        "download_url": null,
+                        "is_ext_url": false,
+                        "component_code": null,
+                        "action_hint": "Manage your app settings",
+                        "products": null
+                    }
+                ]
+            },
+            {
+                "id": "investor_account",
+                "title": "Investor Accounts",
+                "menus": [
+                    {
+                        "id": "basic_details",
+                        "title": "Basic Details",
+                        "icon": "/assets/images/hub_icon/basic_details.svg",
+                        "url": "/my-investor-account/#basic-details",
+                        "download_url": null,
+                        "is_ext_url": false,
+                        "component_code": "MY_INVESTOR_ACCOUNT_PAGE",
+                        "action_hint": "View basic investor details and KYC related actions",
+                        "products": null
+                    },
+                    {
+                        "id": "bank_details",
+                        "title": "Bank Details",
+                        "icon": "/assets/images/hub_icon/bank_details.svg",
+                        "url": "/my-investor-account/#bank-details",
+                        "download_url": null,
+                        "is_ext_url": false,
+                        "component_code": "MY_INVESTOR_ACCOUNT_PAGE",
+                        "action_hint": "View your bank details",
+                        "products": null
+                    },
+                    {
+                        "id": "autopay_mandate",
+                        "title": "Autopay Mandate",
+                        "icon": "/assets/images/hub_icon/autopay_mandate.svg",
+                        "url": "/my-investor-account/#mandate",
+                        "download_url": null,
+                        "is_ext_url": false,
+                        "component_code": "MY_INVESTOR_ACCOUNT_PAGE",
+                        "action_hint": "View your autopay mandates details",
+                        "products": null
+                    },
+                    {
+                        "id": "nominee",
+                        "title": "Nominees",
+                        "icon": "/assets/images/hub_icon/nominee.svg",
+                        "url": "/my-investor-account/#nominee",
+                        "download_url": null,
+                        "is_ext_url": false,
+                        "component_code": "MY_INVESTOR_ACCOUNT_PAGE",
+                        "action_hint": "View your nominees details",
+                        "products": null
+                    },
+                    {
+                        "id": "risk_assessment",
+                        "title": "Risk Assessment",
+                        "icon": "/assets/images/hub_icon/risk_assessment.svg",
+                        "url": "/my-investor-account/#risk_assessment",
+                        "download_url": null,
+                        "is_ext_url": false,
+                        "component_code": "RISK_ASSESSMENT_PAGE",
+                        "action_hint": "View your risk assessment results",
+                        "products": null
+                    },
+                    {
+                        "id": "portfolio_analysis",
+                        "title": "Portfolio Analysis",
+                        "icon": "/assets/images/hub_icon/portfolio_analysis.svg",
+                        "url": "/portfolio/analysis/",
+                        "download_url": null,
+                        "is_ext_url": false,
+                        "component_code": null,
+                        "action_hint": "Open portfolio analysis screen",
+                        "products": null
+                    },
+                    {
+                        "id": "your_sip_swp",
+                        "title": "Your SIPs/SWPs",
+                        "icon": "/assets/images/hub_icon/your_sip_swp.svg",
+                        "url": "/portfolio/manage-systematic-investments/",
+                        "download_url": null,
+                        "is_ext_url": false,
+                        "component_code": "MANAGE_SYS_INVESTMENTS_PAGE",
+                        "action_hint": "Manage your SIPs and SWPs",
+                        "products": null
+                    },
+                    {
+                        "id": "your_order",
+                        "title": "Your Orders",
+                        "icon": "/assets/images/hub_icon/your_order.svg",
+                        "url": "/portfolio/orders/",
+                        "download_url": null,
+                        "is_ext_url": false,
+                        "component_code": "PORTFOLIO_YOUR_ORDERS_PAGE",
+                        "action_hint": "View your orders",
+                        "products": null
+                    },
+                    {
+                        "id": "all_transaction",
+                        "title": "All Transactions",
+                        "icon": "/assets/images/hub_icon/all_transaction.svg",
+                        "url": "/portfolio/transactions/",
+                        "download_url": null,
+                        "is_ext_url": false,
+                        "component_code": null,
+                        "action_hint": "View all your transactions",
+                        "products": null
+                    }
+                ]
+            },
+            {
+                "id": "mutual_funds",
+                "title": "Mutual Funds",
+                "menus": [
+                    {
+                        "id": "portfolio_planner",
+                        "title": "Portfolio Planner",
+                        "icon": "/assets/images/hub_icon/portfolio_planner.svg",
+                        "url": "/portfolio-planner/",
+                        "download_url": null,
+                        "is_ext_url": false,
+                        "component_code": "PORTFOLIO_PLANNER_PAGE",
+                        "action_hint": "Open portfolio planner screen",
+                        "products": null
+                    },
+                    {
+                        "id": "analyst_choice",
+                        "title": "Analyst’s Choice",
+                        "icon": "/assets/images/hub_icon/analyst_choice.svg",
+                        "url": "/funds/analysts-choice/",
+                        "download_url": null,
+                        "is_ext_url": false,
+                        "component_code": "FUND_ANALYSTS_CHOICE_PAGE",
+                        "action_hint": "Open Analyst's Choice screen",
+                        "products": null
+                    },
+                    {
+                        "id": "fund_screener",
+                        "title": "Fund Screener",
+                        "icon": "/assets/images/hub_icon/fund_screener.svg",
+                        "url": "/funds-screener/landing/",
+                        "download_url": null,
+                        "is_ext_url": false,
+                        "component_code": null,
+                        "action_hint": "Open Fund Screener screen",
+                        "products": null
+                    },
+                    {
+                        "id": "sip_calculator",
+                        "title": "SIP Calculator",
+                        "icon": "/assets/images/hub_icon/sip_calculator.svg",
+                        "url": "/sip-calculator/",
+                        "download_url": null,
+                        "is_ext_url": false,
+                        "component_code": null,
+                        "action_hint": "Open SIP Return Calculator screen",
+                        "products": null
+                    },
+                    {
+                        "id": "story_video",
+                        "title": "Stories & Videos",
+                        "icon": "/assets/images/hub_icon/story_video.svg",
+                        "url": "/stories/",
+                        "download_url": null,
+                        "is_ext_url": false,
+                        "component_code": "STORIES_VIDEOS_PAGE",
+                        "action_hint": "Browse stories and videos",
+                        "products": null
+                    }
+                ]
+            },
+            {
+                "id": "stocks",
+                "title": "Stocks",
+                "menus": [
+                    {
+                        "id": "market_monitor",
+                        "title": "Market Monitor",
+                        "icon": "/assets/images/hub_icon/market_monitor.svg",
+                        "url": "/stocks/",
+                        "download_url": null,
+                        "is_ext_url": false,
+                        "component_code": null,
+                        "action_hint": "Open Market Monitor screen",
+                        "products": null
+                    },
+                    {
+                        "id": "stock_advisor",
+                        "title": "Stock Advisor",
+                        "icon": "/assets/images/hub_icon/stock_advisor.svg",
+                        "url": "https://qastock.valueresearch.in/",
+                        "download_url": null,
+                        "is_ext_url": true,
+                        "component_code": "STOCK_ADVISOR_PAGE",
+                        "action_hint": "Open Stock Advisor",
+                        "products": null
+                    },
+                    {
+                        "id": "about_team",
+                        "title": "About the team",
+                        "icon": "/assets/images/hub_icon/about_team.svg",
+                        "url": "https://qastock.valueresearch.in/team",
+                        "download_url": null,
+                        "is_ext_url": true,
+                        "component_code": "VRSA_TEAM_PAGE",
+                        "action_hint": "Open about team",
+                        "products": null
+                    },
+                    {
+                        "id": "stock_screener",
+                        "title": "Stock Screener",
+                        "icon": "/assets/images/hub_icon/stock_screener.svg",
+                        "url": "https://qastock.valueresearch.in/stockscreen",
+                        "download_url": null,
+                        "is_ext_url": false,
+                        "component_code": "STOCK_SCREENER_PAGE",
+                        "action_hint": "Open stock screener",
+                        "products": null
+                    },
+                    {
+                        "id": "ready_to_invest_portfolio",
+                        "title": "Ready to invest portfolios",
+                        "icon": "/assets/images/hub_icon/ready_to_invest_portfolio.svg",
+                        "url": "/stock/reay_to_invest",
+                        "download_url": null,
+                        "is_ext_url": false,
+                        "component_code": "STOCK_READY_TO_INVEST_PORTFOLIO_PAGE",
+                        "action_hint": "Open ready to invest portfolio",
+                        "products": null
+                    },
+                    {
+                        "id": "sell_planner",
+                        "title": "Sell Planner",
+                        "icon": "/assets/images/hub_icon/sell_planner.svg",
+                        "url": "/sellplanner/",
+                        "download_url": null,
+                        "is_ext_url": false,
+                        "component_code": "STOCK_SELL_PLANNER_PAGE",
+                        "action_hint": "Open sell planner",
+                        "products": null
+                    },
+                    {
+                        "id": "coverage_and_insights",
+                        "title": "Coverage and insights",
+                        "icon": "/assets/images/hub_icon/coverage_and_insights.svg",
+                        "url": "/coverage/",
+                        "download_url": null,
+                        "is_ext_url": false,
+                        "component_code": "STOCK_COVERAGE_INSIGHT_PAGE",
+                        "action_hint": "Open coverage and insights",
+                        "products": null
+                    },
+                    {
+                        "id": "investment_planner",
+                        "title": "Investment Planner",
+                        "icon": "/assets/images/hub_icon/investment_planner.svg",
+                        "url": "/buystocks/",
+                        "download_url": null,
+                        "is_ext_url": false,
+                        "component_code": "STOCK_INVESTMENT_PLANNER_PAGE",
+                        "action_hint": "Open invesment planner",
+                        "products": null
+                    }
+                ]
+            },
+            {
+                "id": "more",
+                "title": "More",
+                "menus": [
+                    {
+                        "id": "faqs",
+                        "title": "FAQs",
+                        "icon": "/assets/images/hub_icon/faqs.svg",
+                        "url": "/faqs/",
+                        "download_url": null,
+                        "is_ext_url": false,
+                        "component_code": null,
+                        "action_hint": "View frequently asked questions",
+                        "products": [
+                            {
+                                "title": "Fund Advisor",
+                                "url": "/faqs/",
+                                "download_url": null,
+                                "is_ext_url": false,
+                                "component_code": null
+                            },
+                            {
+                                "title": "Stock Advisor",
+                                "url": "https://qastock.valueresearch.in/faq/",
+                                "download_url": null,
+                                "is_ext_url": true,
+                                "component_code": "STOCK_ADVISOR_PAGE"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "about_us",
+                        "title": "About Us",
+                        "icon": "/assets/images/hub_icon/about_us.svg",
+                        "url": "/about-us/",
+                        "download_url": null,
+                        "is_ext_url": true,
+                        "component_code": null,
+                        "action_hint": "Learn about Value Research",
+                        "products": [
+                            {
+                                "title": "Fund Advisor",
+                                "url": "/about-us/",
+                                "download_url": null,
+                                "is_ext_url": true,
+                                "component_code": null
+                            },
+                            {
+                                "title": "Stock Advisor",
+                                "url": "https://qastock.valueresearch.in/company",
+                                "download_url": null,
+                                "is_ext_url": true,
+                                "component_code": "STOCK_ADVISOR_PAGE"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "contact_us",
+                        "title": "Contact Us",
+                        "icon": "/assets/images/hub_icon/contact_us.svg",
+                        "url": "/contact-us/",
+                        "download_url": null,
+                        "is_ext_url": false,
+                        "component_code": null,
+                        "action_hint": "Get in touch with us",
+                        "products": null
+                    },
+                    {
+                        "id": "privacy_policy",
+                        "title": "Privacy Policy",
+                        "icon": "/assets/images/hub_icon/privacy_policy.svg",
+                        "url": "https://advisorqa2.valueresearch.in/fund-advisor/privacy-policy/",
+                        "download_url": null,
+                        "is_ext_url": true,
+                        "component_code": null,
+                        "action_hint": "Read our privacy policy",
+                        "products": [
+                            {
+                                "title": "Fund Advisor",
+                                "url": "https://advisorqa2.valueresearch.in/fund-advisor/privacy-policy/",
+                                "download_url": null,
+                                "is_ext_url": true,
+                                "component_code": null
+                            },
+                            {
+                                "title": "Stock Advisor",
+                                "url": "https://qastock.valueresearch.in/privacypolicy",
+                                "download_url": null,
+                                "is_ext_url": true,
+                                "component_code": "STOCK_ADVISOR_PAGE"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "terms_n_conditions",
+                        "title": "Terms & Conditions",
+                        "icon": "/assets/images/hub_icon/user_agreement.svg",
+                        "url": "/fund-advisor/user-agreement/",
+                        "download_url": "/downloads/user-agreement/fund-advisor/",
+                        "is_ext_url": true,
+                        "component_code": null,
+                        "action_hint": "Read our terms and conditions",
+                        "products": [
+                            {
+                                "title": "Fund Advisor",
+                                "url": "/fund-advisor/user-agreement/",
+                                "download_url": null,
+                                "is_ext_url": true,
+                                "component_code": null
+                            },
+                            {
+                                "title": "Stock Advisor",
+                                "url": "/stock-advisor/user-agreement/",
+                                "download_url": null,
+                                "is_ext_url": true,
+                                "component_code": "STOCK_ADVISOR_PAGE"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "refund_policy",
+                        "title": "Refund Policy",
+                        "icon": "/assets/images/hub_icon/refund_policy.svg",
+                        "url": "https://advisorqa2.valueresearch.in/fund-advisor/refund-policy/",
+                        "download_url": null,
+                        "is_ext_url": true,
+                        "component_code": null,
+                        "action_hint": "View our refund policy",
+                        "products": [
+                            {
+                                "title": "Fund Advisor",
+                                "url": "https://advisorqa2.valueresearch.in/fund-advisor/refund-policy/",
+                                "download_url": null,
+                                "is_ext_url": true,
+                                "component_code": null
+                            },
+                            {
+                                "title": "Stock Advisor",
+                                "url": "https://qastock.valueresearch.in/refundpolicy",
+                                "download_url": null,
+                                "is_ext_url": true,
+                                "component_code": "STOCK_ADVISOR_PAGE"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "investor_charter",
+                        "title": "Investor Charter",
+                        "icon": "/assets/images/hub_icon/investor_charter.svg",
+                        "url": "https://advisorqa2.valueresearch.in/fund-advisor/investor-charter/",
+                        "download_url": null,
+                        "is_ext_url": true,
+                        "component_code": null,
+                        "action_hint": "View the investor charter",
+                        "products": [
+                            {
+                                "title": "Fund Advisor",
+                                "url": "https://advisorqa2.valueresearch.in/fund-advisor/investor-charter/",
+                                "download_url": null,
+                                "is_ext_url": true,
+                                "component_code": null
+                            },
+                            {
+                                "title": "Stock Advisor",
+                                "url": "https://qastock.valueresearch.in/investorcharter",
+                                "download_url": null,
+                                "is_ext_url": true,
+                                "component_code": "STOCK_ADVISOR_PAGE"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "investor_complaint",
+                        "title": "Investor Complaint",
+                        "icon": "/assets/images/hub_icon/investor_complaint.svg",
+                        "url": "https://advisorqa2.valueresearch.in/fund-advisor/investor-complaint/",
+                        "download_url": null,
+                        "is_ext_url": true,
+                        "component_code": null,
+                        "action_hint": "Submit or track complaint",
+                        "products": [
+                            {
+                                "title": "Fund Advisor",
+                                "url": "https://advisorqa2.valueresearch.in/fund-advisor/investor-complaint/",
+                                "download_url": null,
+                                "is_ext_url": true,
+                                "component_code": null
+                            },
+                            {
+                                "title": "Stock Advisor",
+                                "url": "https://qastock.valueresearch.in/investorcomplaint",
+                                "download_url": null,
+                                "is_ext_url": true,
+                                "component_code": "STOCK_ADVISOR_PAGE"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "odr_portal",
+                        "title": "ODR Portal",
+                        "icon": "/assets/images/hub_icon/odr_portal.svg",
+                        "url": "https://smartodr.in/login",
+                        "download_url": null,
+                        "is_ext_url": true,
+                        "component_code": null,
+                        "action_hint": "Open the ODR portal for dispute resolution",
+                        "products": null
+                    },
+                    {
+                        "id": "audit_status",
+                        "title": "Audit Status",
+                        "icon": "/assets/images/hub_icon/audit_status.svg",
+                        "url": "https://advisorqa2.valueresearch.in/fund-advisor/audit-status/",
+                        "download_url": null,
+                        "is_ext_url": true,
+                        "component_code": null,
+                        "action_hint": "View our audit status",
+                        "products": [
+                            {
+                                "title": "Fund Advisor",
+                                "url": "https://advisorqa2.valueresearch.in/fund-advisor/audit-status/",
+                                "download_url": null,
+                                "is_ext_url": true,
+                                "component_code": null
+                            },
+                            {
+                                "title": "Stock Advisor",
+                                "url": "https://qastock.valueresearch.in/auditstatus",
+                                "download_url": null,
+                                "is_ext_url": true,
+                                "component_code": "STOCK_ADVISOR_PAGE"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ],
+        "add_investor": {
+            "is_show": true,
+            "is_active": true,
+            "title": "Investor",
+            "url": "/advisor/onboarding/",
+            "component_code": "INVESTOR_ADD"
+        },
+        "is_add_investor_allowed": true,
+        "disclosures": [
+            {
+                "title": "Statutory Disclosures",
+                "text": "Risk assessment is a set of multi-choice questions, answers to which help us understand your disposition towards the risk of loss in your investments. Your inputs help us tailor our investment advice to your risk appetite. It has to be done separately for each investor you add to your account."
+            }
+        ],
+        "disclosures_data": {
+            "data": [
+                {
+                    "title": "Principal Officer",
+                    "details": {
+                        "list": [
+                            {"name": "Name", "data_fmt": "Ashutosh Gupta"},
+                            {"name": "Email", "data_fmt": "principalofficer@valueresearch.in"},
+                            {"name": "Mobile Number", "data_fmt": 9711400789}
+                        ]
+                    }
+                },
+                {
+                    "title": "Compliance Officer",
+                    "details": {
+                        "list": [
+                            {"name": "Name", "data_fmt": "Rahul Rastogi"},
+                            {"name": "Email", "data_fmt": "compliance@valueresearch.in"},
+                            {"name": "Mobile Number", "data_fmt": 8595521812}
+                        ]
+                    }
+                },
+                {
+                    "title": "Grievance Officer",
+                    "details": {
+                        "list": [
+                            {"name": "Name", "data_fmt": "Deepa Mandhani"},
+                            {"name": "Email", "data_fmt": "grievanceofficer@valueresearch.in"},
+                            {"name": "Mobile Number", "data_fmt": 9999322422}
+                        ]
+                    }
+                },
+                {
+                    "title": "Warning",
+                    "details": {"desc": "Investment in securities market are subject to market risks. Read all the related documents carefully before investing."}
+                },
+                {
+                    "title": "Correspondence Address",
+                    "details": {"desc": "<p> Independent Advisors Private Limited<br>C-103, Sector 65, Noida, Gautam Buddha Nagar, Uttar Pradesh, 201301</p>"}
+                },
+                {
+                    "title": "Registered Office",
+                    "details": {"desc": "<p> Independent Advisors Private Limited<br> 5, DDA Commercial Complex, Chitra Vihar, New Delhi - 110092</p>"}
+                },
+                {
+                    "title": "Disclaimer",
+                    "details": {"desc": "Registration granted by SEBI, enlistment as IA with Exchange and certification from National Institute of Securities Markets (NISM) in no way guarantee performance of the intermediary or provide any assurance of returns to investors"}
+                },
+                {
+                    "details": {"desc": "&copy; 2026 Independent Advisors Private Limited, All Rights Reserved<br>SEBI Registration No: INA100008443 | BSE enlistment No: 1201 | CIN: U74140DL2022PTC399760 | SEBI local office address: NBCC Complex, Office Tower-1, 8th Floor, Plate B, East Kidwai Nagar, New Delhi - 110023. Type of Registration: Non-Individual. Validity of registration: 14 September, 2017 - Perpetual"}
+                }
+            ]
+        }
+    },
+    "page_info": {
+        "lang": "en",
+        "title": "The Hub | Value Research",
+        "inpage_title": "The Hub",
+        "meta_keywords": "Best Funds, Best Funds to Invest, Best Stocks, Best Stocks to Invest, Mutual Funds, Fund Rating, Fund Returns, Fund Analysis, Stocks, Equity, Tax",
+        "meta_description": ""
+    },
+    "tracking_info": {
+        "we_user_properties": [],
+        "ga_user_properties": [],
+        "ga_uid": null,
+        "ga_client_id": 38310865123,
+        "gtm_nonce": "fb25bda7b3224aa246b54f0ef8e21d259b388455",
+        "ga_tracking_url": null,
+        "url_for_sharing": "/hub/",
+        "canonical_url": "https://advisorqa2.valueresearch.in/hub/"
+    }
+}

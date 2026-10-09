@@ -1,0 +1,92 @@
+name: API Automation Suite
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+  schedule:
+    # Nightly regression - every module, every positive/negative/edge case.
+    # Not on every PR: too slow for that feedback loop.
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      env:
+        description: "Target environment"
+        required: true
+        default: "qa"
+        type: choice
+        options: [ dev, qa, stage, prod ]
+      suite:
+        description: "Suite file to run"
+        required: true
+        default: "src/test/resources/suites/smoke.xml"
+        type: choice
+        options:
+          - src/test/resources/suites/smoke.xml
+          - src/test/resources/suites/sanity.xml
+          - src/test/resources/suites/regression.xml
+          - src/test/resources/suites/full.xml
+
+jobs:
+  run-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      # Trigger decides the tier when this wasn't a manual dispatch:
+      #   pull_request      -> smoke      (fast feedback, gates the merge)
+      #   push to main       -> sanity     (broader check right after merge)
+      #   schedule           -> regression (nightly, full breadth)
+      #   workflow_dispatch  -> whatever the user picked (inputs above)
+      # "full" is intentionally not on this automatic list - it's a
+      # release-gate/manual tier, triggered via workflow_dispatch only.
+      - name: Determine suite and environment
+        id: pick
+        run: |
+          case "${{ github.event_name }}" in
+            pull_request)      suite="src/test/resources/suites/smoke.xml" ;;
+            push)               suite="src/test/resources/suites/sanity.xml" ;;
+            schedule)           suite="src/test/resources/suites/regression.xml" ;;
+            workflow_dispatch)  suite="${{ github.event.inputs.suite }}" ;;
+          esac
+          env_name="${{ github.event.inputs.env || 'qa' }}"
+          echo "suite=$suite" >> "$GITHUB_OUTPUT"
+          echo "env=$env_name" >> "$GITHUB_OUTPUT"
+
+      # ./mvnw, not mvn: pins the exact Maven version (.mvn/wrapper/maven-wrapper.properties)
+      # so this build behaves identically on every runner and every contributor's machine,
+      # rather than depending on whatever Maven the runner image happens to preinstall.
+      - name: Run API test suite
+        run: ./mvnw -B test -P${{ steps.pick.outputs.env }} -DsuiteXmlFile=${{ steps.pick.outputs.suite }}
+
+      # PR check annotations directly from the Surefire XML - failures show up
+      # inline on the PR without opening an artifact.
+      - name: Publish test results
+        if: always()
+        uses: dorny/test-reporter@v1
+        with:
+          name: API Test Results
+          path: target/surefire-reports/*.xml
+          reporter: java-junit
+          fail-on-error: false
+
+      - name: Upload Extent report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: extent-report
+          path: reports/
+
+      - name: Upload Surefire results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-results
+          path: target/surefire-reports/

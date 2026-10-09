@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!-- Manual-run scratch suite (see CLAUDE.md): complete Portfolio Planner business-rule coverage.
+     Planner Generate takes ~20s per call, so the data provider runs 3 scenarios at a time. -->
+<suite name="PortfolioPlannerCompleteCoverage" data-provider-thread-count="3">
+  <test name="CompleteCoverage">
+    <classes>
+      <class name="com.org.apitests.portfolio.PortfolioPlannerCompleteCoverageTests"/>
+    </classes>
+  </test>
+</suite>

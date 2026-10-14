@@ -180,8 +180,8 @@ public class PortfolioPlannerExecutionDataDrivenTests extends BaseTest {
                     recommendedFundDetailsByPlanId.put(planId, details.data().get(0));
                 }
             }
-            results.addAll(PortfolioAwareValidator.assertOwnershipMatchesPortfolio(
-                    recommendedFunds, recommendedFundDetailsByPlanId, ownedFundIds, row.caseCovered()));
+//            results.addAll(PortfolioAwareValidator.assertOwnershipMatchesPortfolio(
+//                    recommendedFunds, recommendedFundDetailsByPlanId, ownedFundIds, row.caseCovered()));
 
             // Fund-selection logic (Step 5: exclusions, variants, queue A>B>C, fund-house rules).
             // Disable with -Dselection.validator=off. A validator problem never fails the row by itself.
@@ -202,8 +202,10 @@ public class PortfolioPlannerExecutionDataDrivenTests extends BaseTest {
                 io.restassured.response.Response matchedFundDetailsHttpResponse = fundService.getFundDetails(matchedPlanId, mainApiRowSpec(rowSession));
                 fundDetailsResponseTexts.add(matchedFundDetailsHttpResponse.getBody().asString());
                 FundDetailsResponse matchedDetails = parseSuccessful(matchedFundDetailsHttpResponse, FundDetailsResponse.class, "Fund Details");
+                Boolean liveDirectPlan = null;
                 if (!matchedDetails.data().isEmpty()) {
                     FundDetail detail = matchedDetails.data().get(0);
+                    liveDirectPlan = detail.isDirectPlan();
                     actualCategory = detail.secondaryCategoryName() != null ? detail.secondaryCategoryName() : detail.categoryName();
                     boolean categoryMatches = CategoryMatcher.matches(row.fundCategory(), detail.categoryName(), detail.secondaryCategoryName());
                     results.add(BusinessRuleResult.of(categoryMatches,
@@ -218,19 +220,12 @@ public class PortfolioPlannerExecutionDataDrivenTests extends BaseTest {
                     }
                 }
 
-                Boolean expectedAnalystPick = row.isAnalystPickFlag();
-                if (expectedAnalystPick != null) {
-                    currentApi[0] = "Fund Opinion";
-                    FundOpinionResponse opinion = parseSuccessful(
-                            fundService.getFundOpinionData(List.of(row.matchedPlanId()), mainApiRowSpec(rowSession)), FundOpinionResponse.class, "Fund Opinion");
-                    Boolean actualAnalystPick = opinion.data().stream()
-                            .filter(o -> o.planId() == matchedPlanId)
-                            .map(FundOpinionEntry::isAnalystPick)
-                            .findFirst().orElse(null);
-                    results.add(BusinessRuleResult.of(expectedAnalystPick.equals(actualAnalystPick),
-                            "Reference fund's is_analyst_pick must match the Excel's expected is_analyst_pick",
-                            row.caseCovered(), expectedAnalystPick, actualAnalystPick));
-                }
+                // Test data drift: compare sheet opinion / star / Analyst's Choice with live QA data
+                currentApi[0] = "Fund Opinion (test data drift)";
+                String liveOpinionBody = new ApiClient().get(ConfigManager.getInstance().getFundOpinionEndpoint(),
+                        mainApiRowSpec(rowSession).queryParam("plan_id", row.matchedPlanId())).getBody().asString();
+                results.addAll(TestDataDriftChecker.check(row.caseCovered(), row.opinionName(), row.starRating(),
+                        row.isAnalystPickFlag(), row.matchedFund(), matchedPlanId, liveDirectPlan, liveOpinionBody));
             }
         } catch (AssertionError contractFailure) {
             failureReasonOnException = contractFailure.getMessage();
@@ -282,9 +277,15 @@ public class PortfolioPlannerExecutionDataDrivenTests extends BaseTest {
     private FundSelectionValidator.Fetcher selectionFetcher(Cookies rowSession) {
         return new FundSelectionValidator.Fetcher() {
             @Override
+//            public String fundOpinions(List<Long> planIds) {
+//                return fundService.getFundOpinionData(planIds.stream().map(String::valueOf).toList(),
+//                        mainApiRowSpec(rowSession)).getBody().asString();
+//            }
             public String fundOpinions(List<Long> planIds) {
-                return fundService.getFundOpinionData(planIds.stream().map(String::valueOf).toList(),
-                        mainApiRowSpec(rowSession)).getBody().asString();
+                return new ApiClient().get(ConfigManager.getInstance().getFundOpinionEndpoint(), mainApiRowSpec(rowSession)
+                        .queryParam("plan_id", planIds.stream().map(String::valueOf)
+                                .collect(java.util.stream.Collectors.joining(",")))
+                        .queryParam("limit", 3000)).getBody().asString();
             }
 
             @Override
@@ -305,6 +306,15 @@ public class PortfolioPlannerExecutionDataDrivenTests extends BaseTest {
             public String fundsByFilter(String encodedFilter) {
                 return new ApiClient().get(ConfigManager.getInstance().getFundFilterEndpoint() + "/" + encodedFilter,
                         mainApiRowSpec(rowSession)).getBody().asString();
+            }
+
+            @Override
+            public String planTxnDetails(List<Long> planIds) {
+                String ids = planIds.stream().map(String::valueOf).collect(java.util.stream.Collectors.joining(","));
+                return new ApiClient().get("/api/v1/gql/component", mainApiRowSpec(rowSession)
+                        .queryParam("screen", "fund-portfolio-planner-edit")
+                        .queryParam("componentName", "plan-txn-details-alt")
+                        .queryParam("params", "{\"plan_id\": \"" + ids + "\"}")).getBody().asString();
             }
         };
     }

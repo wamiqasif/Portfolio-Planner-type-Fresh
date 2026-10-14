@@ -54,6 +54,11 @@ final class FundSelectionValidator {
 
         /** Body of /api/v1/funds/filter/{encodedFilter} */
         String fundsByFilter(String encodedFilter);
+
+        /** Body of gql component plan-txn-details-alt for these plans; null = limits not checked. */
+        default String planTxnDetails(List<Long> planIds) {
+            return null;
+        }
     }
 
     static final double CONCENTRATION_LIMIT_PERCENT = 15.0;
@@ -135,7 +140,7 @@ final class FundSelectionValidator {
         }
     }
 
-    record Recommended(Fund fund, boolean isOwned, double firstMonthAmount) {
+    record Recommended(Fund fund, boolean isOwned, double firstMonthAmount, List<InvestmentLimits.Leg> legs) {
     }
 
     // =============================================================================================
@@ -204,6 +209,28 @@ final class FundSelectionValidator {
         }
         Set<String> slotsInPlan = recommended.stream().map(r -> r.fund().slot()).collect(Collectors.toSet());
 
+        // ---- 5.6A investment limits (plan-txn-details) for recommended funds and held candidates
+        List<Long> limitIds = new ArrayList<>();
+        recommended.forEach(r -> limitIds.add(r.fund().planId));
+        candidateByFund.values().forEach(c -> limitIds.add(c.planId));
+        String limitsBody = null;
+        try {
+            limitsBody = fetcher.planTxnDetails(limitIds.stream().distinct().toList());
+        } catch (RuntimeException e) {
+            out.add(BusinessRuleResult.of(true, WARN + "Investment limits not loaded: " + e.getMessage(), scenario, "-", "-"));
+        }
+        final Map<Long, InvestmentLimits.Limits> limits = InvestmentLimits.parse(limitsBody);
+        for (Recommended r : recommended) {
+            InvestmentLimits.Limits l = limits.get(r.fund().planId);
+            if (l == null) {
+                continue;
+            }
+            String broken = InvestmentLimits.violation(l, r.legs());
+            out.add(BusinessRuleResult.of(broken == null,
+                    "Recommended fund must meet its own investment limits (5.6A, plan-txn-details)", scenario,
+                    "all limits met", broken == null ? r.fund().label() : r.fund().label() + ": " + broken));
+        }
+
         // ---- 5.2A exclusion filters
         for (Fund c : candidateByFund.values()) {
             c.exclusion = exclusionReason(c, weightByFund.getOrDefault(c.fundId, 0.0), slotsInPlan);
@@ -265,9 +292,23 @@ final class FundSelectionValidator {
                 }
             }
 
-            // (3) queue precedence A > B > C
-            List<Fund> queueA = queue(candidateByFund.values(), slot, used, true);
-            List<Fund> queueB = queue(candidateByFund.values(), slot, used, false);
+            // (3) queue precedence A > B > C; held funds that cannot take this slot's legs are validly skipped
+            List<Fund> queueA = new ArrayList<>(queue(candidateByFund.values(), slot, used, true));
+            List<Fund> queueB = new ArrayList<>(queue(candidateByFund.values(), slot, used, false));
+            for (List<Fund> q : List.of(queueA, queueB)) {
+                q.removeIf(c -> {
+                    if (c.fundId == rf.fundId) {
+                        return false;
+                    }
+                    String why = InvestmentLimits.violation(limits.get(c.planId), r.legs());
+                    if (why != null) {
+                        out.add(BusinessRuleResult.of(true, WARN + "Held fund validly skipped for slot '" + slot
+                                + "' - investment limit (5.6A)", scenario, c.label(), why));
+                        return true;
+                    }
+                    return false;
+                });
+            }
             if (heldEligible && heldCandidate.ac) {
                 Fund better = queueA.stream().filter(a -> a.fundId != rf.fundId)
                         .filter(a -> priority(a) < priority(heldCandidate)).findFirst().orElse(null);
@@ -279,7 +320,7 @@ final class FundSelectionValidator {
                 List<Fund> aAlternatives = queueA.stream().filter(a -> a.fundId != rf.fundId).toList();
                 out.add(BusinessRuleResult.of(aAlternatives.isEmpty(),
                         "Queue A (held AC) must win over Queue B (held Good) for slot '" + slot + "' (5.3/5.5)", scenario,
-                        aAlternatives.isEmpty() ? "Queue B pick allowed" : names(aAlternatives) + " (unless restriction/fund-house rule blocks it)",
+                        aAlternatives.isEmpty() ? "Queue B pick allowed" : names(aAlternatives) + " (unless fund-house rule blocks it)",
                         rf.label()));
                 if (aAlternatives.isEmpty() && queueB.size() > 1) {
                     out.add(QueueBSort.check(queueB, heldCandidate, slot, scenario));
@@ -289,7 +330,7 @@ final class FundSelectionValidator {
                 skipped.addAll(queueB);
                 out.add(BusinessRuleResult.of(skipped.isEmpty(),
                         "Held eligible funds must be used before Analyst's Choice master list for slot '" + slot + "' (5.5)", scenario,
-                        skipped.isEmpty() ? "Queue C pick allowed" : names(skipped) + " (unless restriction/fund-house rule blocks it)",
+                        skipped.isEmpty() ? "Queue C pick allowed" : names(skipped) + " (unless fund-house rule blocks it)",
                         rf.label()));
                 boolean buyListCategory = BUY_LIST_CATEGORIES.contains(slot);
                 if (!rf.ac && buyListCategory && !rf.watchlisted && !rf.etf) {
@@ -445,7 +486,8 @@ final class FundSelectionValidator {
                 f.name = n.path("plan_data").path("name").asText("?");
             }
             funds.add(f);
-            out.add(new Recommended(f, n.path("is_owned").asBoolean(false), n.path("first_month_amount").asDouble(0)));
+            out.add(new Recommended(f, n.path("is_owned").asBoolean(false), n.path("first_month_amount").asDouble(0),
+                    InvestmentLimits.legs(n)));
         }
         enrich(funds, acList, fetcher);
         return out;

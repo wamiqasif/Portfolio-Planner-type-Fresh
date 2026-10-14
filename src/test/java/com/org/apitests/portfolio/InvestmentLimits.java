@@ -113,6 +113,27 @@ final class InvestmentLimits {
         return null;
     }
 
+    /** Differences between the two limit sources for one plan, or null when they agree / one is missing. */
+    static String mismatch(Limits a, Limits b) {
+        if (a == null || b == null) {
+            return null;
+        }
+        List<String> d = new ArrayList<>();
+        cmp(d, "min_sip_installment", a.minSipInstalments(), b.minSipInstalments());
+        cmp(d, "max_sip_installment", a.maxSipInstalments(), b.maxSipInstalments());
+        cmp(d, "is_allow_sip", a.allowSip(), b.allowSip());
+        cmp(d, "is_allow_lumpsum", a.allowLumpsum(), b.allowLumpsum());
+        cmp(d, "min_sip_investment", a.minSipAmount(), b.minSipAmount());
+        cmp(d, "min_lumpsum_investment", a.minLumpsumAmount(), b.minLumpsumAmount());
+        return d.isEmpty() ? null : String.join("; ", d);
+    }
+
+    private static void cmp(List<String> d, String field, Object primary, Object alt) {
+        if (primary != null && alt != null && !primary.equals(alt)) {
+            d.add(field + " = " + primary + " (plan-txn-details) vs " + alt + " (plan-txn-details-alt)");
+        }
+    }
+
     private static String fmt(double v) {
         return v == Math.rint(v) ? String.valueOf((long) v) : String.valueOf(v);
     }

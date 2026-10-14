@@ -313,6 +313,15 @@ public class PortfolioPlannerExecutionDataDrivenTests extends BaseTest {
                 String ids = planIds.stream().map(String::valueOf).collect(java.util.stream.Collectors.joining(","));
                 return new ApiClient().get("/api/v1/gql/component", mainApiRowSpec(rowSession)
                         .queryParam("screen", "fund-portfolio-planner-edit")
+                        .queryParam("componentName", "plan-txn-details")
+                        .queryParam("params", "{\"plan_id\": \"" + ids + "\"}")).getBody().asString();
+            }
+
+            @Override
+            public String planTxnDetailsAlt(List<Long> planIds) {
+                String ids = planIds.stream().map(String::valueOf).collect(java.util.stream.Collectors.joining(","));
+                return new ApiClient().get("/api/v1/gql/component", mainApiRowSpec(rowSession)
+                        .queryParam("screen", "fund-portfolio-planner-edit")
                         .queryParam("componentName", "plan-txn-details-alt")
                         .queryParam("params", "{\"plan_id\": \"" + ids + "\"}")).getBody().asString();
             }

@@ -55,8 +55,17 @@ final class FundSelectionValidator {
         /** Body of /api/v1/funds/filter/{encodedFilter} */
         String fundsByFilter(String encodedFilter);
 
-        /** Body of gql component plan-txn-details-alt for these plans; null = limits not checked. */
+        /** Body of gql component plan-txn-details (the source the planner uses); null = limits not checked. */
         default String planTxnDetails(List<Long> planIds) {
+            return null;
+        }
+
+        /**
+         * No longer called (plan-txn-details-alt usage was reverted by dev, 14-Oct-2026). Kept only so that
+         * test classes that still override it keep compiling.
+         */
+        @Deprecated
+        default String planTxnDetailsAlt(List<Long> planIds) {
             return null;
         }
     }

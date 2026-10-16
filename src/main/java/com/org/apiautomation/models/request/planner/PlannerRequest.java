@@ -121,6 +121,11 @@ public final class PlannerRequest {
         return set("needed_annual_amount", value);
     }
 
+    /** REGULAR-INCOME only: when the income should start (1 Immediately, 2 Next 1 year, 3 Next 1-5 years). */
+    public PlannerRequest startRegularIncome(Object value) {
+        return set("start_regular_income", value);
+    }
+
     public Object get(String key) {
         return params.get(key);
     }

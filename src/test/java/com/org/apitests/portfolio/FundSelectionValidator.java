@@ -32,8 +32,9 @@ import java.util.zip.Deflater;
  *   <li>Queue B sort metrics (1-yr alpha etc.), investment restrictions (min/max SIP) and tag
  *       preferences are not available here. Where they could legitimately explain a different
  *       pick, the result is reported as {@code [WARN]} (logged, not failed).</li>
- *   <li>Interim decision (Oct 2026, pending PM): an active fund at or above 15% of the total
- *       portfolio must not appear in the plan at all - Good or Analyst's Choice.</li>
+ *   <li>PM decision (15-Oct-2026): an active fund at or above 15% of the total portfolio is excluded
+ *       from the portfolio pool AND does not enter Queue C (Analyst's Choice list) - it must not appear
+ *       in the plan at all.</li>
  * </ul>
  *
  * <p>Results use {@link BusinessRuleResult}: FAIL = rule broken; PASS whose rule text starts with
@@ -74,9 +75,9 @@ final class FundSelectionValidator {
     static final int GOOD_OPINION_TYPE_ID = 1;
     static final String LARGE_CAP_INDEX_SLOT = "large cap index";
     static final String GROWTH_SLOT = "growth";
+    /** PM 16-Oct-2026: these categories may fall back to a 'Good' fund when no Analyst's Choice fund is available. */
+    static final Set<String> GOOD_FALLBACK_SLOTS = Set.of("conservative hybrid", "dynamic asset allocation");
     private static final String WARN = "[WARN] ";
-    /** PRD change-fund mapping lists "BUY list and Analyst's Choice" for these two categories. */
-    private static final Set<String> BUY_LIST_CATEGORIES = Set.of("conservative hybrid", "dynamic asset allocation");
 
     /** Logic doc 5.4.2: Flexicap / Value / Large & Midcap / Multicap / Focused form one 'Growth' slot. */
     private static final Set<String> GROWTH_CATEGORIES = Set.of(
@@ -114,6 +115,10 @@ final class FundSelectionValidator {
         Integer rating;
         Integer opinionTypeId;
         boolean ac;
+        /** opinion-data is_provisional ("Good Start": fund under 3 years old, no star rating). */
+        boolean provisional;
+        /** opinion-data tag_name + Analyst's Choice list tags (e.g. "Diversified", "Value", "International"). */
+        List<String> tags = new ArrayList<>();
         Integer acPriority;
         boolean watchlisted;
         double units;
@@ -157,6 +162,9 @@ final class FundSelectionValidator {
         List<BusinessRuleResult> out = new ArrayList<>();
         JsonNode portfolio = read(portfolioBody);
         JsonNode planner = read(plannerBody);
+        // Monthly income plan (REGULAR-INCOME): response carries regular_income_funds_data
+        JsonNode rif = planner.path("data").path("regular_income_funds_data");
+        final boolean incomePlan = !rif.isMissingNode() && !rif.isNull() && rif.size() > 0;
         Map<Long, AcInfo> acList = acList(fetcher);
 
         // ---- held funds (only units > 0)
@@ -229,6 +237,17 @@ final class FundSelectionValidator {
             out.add(BusinessRuleResult.of(true, WARN + "Investment limits not loaded: " + e.getMessage(), scenario, "-", "-"));
         }
         final Map<Long, InvestmentLimits.Limits> limits = InvestmentLimits.parse(limitsBody);
+        if (incomePlan) {
+            for (Recommended r : recommended) {
+                Fund f = r.fund();
+                if ("growth".equals(f.slot()) && f.opinionRaw != null) {
+                    // WARN only for now: tag data comes from opinion-data / Analyst's Choice list and may be incomplete
+                    out.add(BusinessRuleResult.of(true, (hasTag(f, "diversified") ? "" : WARN)
+                            + "Monthly income plan: growth fund should have the 'Diversified' tag (PM, 15-Oct-2026)", scenario,
+                            "tag Diversified", f.label() + " tags=" + f.tags));
+                }
+            }
+        }
         for (Recommended r : recommended) {
             InvestmentLimits.Limits l = limits.get(r.fund().planId);
             if (l == null) {
@@ -262,16 +281,20 @@ final class FundSelectionValidator {
             if (heldCandidate != null && heldCandidate.exclusion != null) {
                 boolean concentration = heldCandidate.exclusion.contains("% of total portfolio");
                 if (rf.ac && !concentration) {
-                    // PM decision (Oct 2026): an excluded held fund MAY come back through the Analyst's Choice
-                    // master list (Queue C) and must then show "Already yours" and count in "You already own N".
-                    ownedExpected++;
-                    out.add(BusinessRuleResult.of(r.isOwned(),
-                            "Held fund that came back via Analyst's Choice master list must show 'Already yours' (PM decision)",
-                            scenario, "is_owned=true for " + rf.label() + " [held as " + (heldCandidate.heldAs != null ? heldCandidate.heldAs : rf.name)
+                    // On hold (QA, 15-Oct-2026): whether a held fund excluded for reasons other than the 15% rule
+                    // (e.g. held plan rated 1-3 star) may come back through the Analyst's Choice list is not
+                    // decided yet (09-Oct decision set aside). Reported as WARN only - never fails the row.
+                    // PM decision (15-Oct-2026): a fund above 15% does NOT enter Queue C (handled below).
+                    if (r.isOwned()) {
+                        ownedExpected++;
+                    }
+                    out.add(BusinessRuleResult.of(true, WARN + "Excluded held fund came back via Analyst's Choice list"
+                                    + " - rule on hold (not checked)", scenario,
+                            rf.label() + " [held as " + (heldCandidate.heldAs != null ? heldCandidate.heldAs : rf.name)
                                     + "; excluded from portfolio pool: " + heldCandidate.exclusion + "]",
                             "is_owned=" + r.isOwned()));
                 } else {
-                    // 15% concentration (interim decision) or not Analyst's Choice: must never be in the plan
+                    // above 15% (PM 15-Oct-2026: not in Queue C either) or not Analyst's Choice: must not be in the plan
                     out.add(BusinessRuleResult.of(false, "Excluded portfolio fund must not be recommended (5.2A)", scenario,
                             "not in plan (" + heldCandidate.exclusion + ")", rf.label()));
                     used.add(rf.fundId);
@@ -310,9 +333,20 @@ final class FundSelectionValidator {
                         return false;
                     }
                     String why = InvestmentLimits.violation(limits.get(c.planId), r.legs());
+                    if (why == null) {
+                        why = fundHouseBlock(c, rf, recommended);
+                    }
+                    if (why == null && incomePlan && "growth".equals(slot) && isValueCategory(c)) {
+                        why = "monthly income plan: Value funds are not used in the growth slot (dev/PM, 16-Oct-2026); category="
+                                + c.category;
+                    }
+                    if (why == null && incomePlan && "growth".equals(slot) && !hasTag(c, "diversified")) {
+                        why = "monthly income plan: growth slot needs the 'Diversified' tag (PM, 15-Oct-2026); tags="
+                                + c.tags;
+                    }
                     if (why != null) {
                         out.add(BusinessRuleResult.of(true, WARN + "Held fund validly skipped for slot '" + slot
-                                + "' - investment limit (5.6A)", scenario, c.label(), why));
+                                + "' - investment limit / fund-house / tag rule", scenario, c.label(), why));
                         return true;
                     }
                     return false;
@@ -341,11 +375,14 @@ final class FundSelectionValidator {
                         "Held eligible funds must be used before Analyst's Choice master list for slot '" + slot + "' (5.5)", scenario,
                         skipped.isEmpty() ? "Queue C pick allowed" : names(skipped) + " (unless fund-house rule blocks it)",
                         rf.label()));
-                boolean buyListCategory = BUY_LIST_CATEGORIES.contains(slot);
-                if (!rf.ac && buyListCategory && !rf.watchlisted && !rf.etf) {
-                    out.add(BusinessRuleResult.of(true, WARN + "Non-Analyst's Choice fund for '" + slot
-                            + "' - allowed only if this category also uses the BUY list (PRD change-fund mapping); confirm with dev",
-                            scenario, "Analyst's Choice or BUY list fund", rf.label()));
+                // Planner (funds-buy/generate): funds outside the portfolio come from the Analyst's Choice list (Queue C).
+                // PM exception (16-Oct-2026): for Conservative Hybrid and Dynamic Asset Allocation, if no Analyst's
+                // Choice fund is available, a 'Good' opinion fund may be picked (portfolio-aware and fresh mode).
+                boolean goodFallbackCategory = GOOD_FALLBACK_SLOTS.contains(slot);
+                if (!rf.ac && goodFallbackCategory) {
+                    out.add(BusinessRuleResult.of(rf.good() && !rf.watchlisted && !rf.etf,
+                            "Conservative Hybrid / Dynamic Asset Allocation: non-Analyst's Choice fund must be 'Good' (PM exception, 16-Oct-2026)",
+                            scenario, "opinion Good, not ETF", "opinion_type_id=" + rf.opinionTypeId + ", ETF=" + rf.etf + " - " + rf.label()));
                 } else {
                     out.add(BusinessRuleResult.of(rf.ac && !rf.watchlisted && !rf.etf,
                             "Fund not in portfolio must be a non-watchlisted, non-ETF Analyst's Choice fund (Queue C, 5.3)", scenario,
@@ -381,6 +418,10 @@ final class FundSelectionValidator {
         if (c.index && !(LARGE_CAP_INDEX_SLOT.equals(c.slot()) && slotsInPlan.contains(LARGE_CAP_INDEX_SLOT))) {
             return "index fund and the plan has no matching index slot";
         }
+        // QA/PM rule (15-Oct-2026): a held "Good Start" (provisional) fund is used only if it is Analyst's Choice
+        if (c.provisional && !c.ac) {
+            return "provisional opinion (Good Start) and not Analyst's Choice";
+        }
         if (c.good() && !c.ac && c.rating != null && c.rating >= 1 && c.rating <= 3) {
             return "Good but not AC and rated " + c.rating + " star";
         }
@@ -411,6 +452,43 @@ final class FundSelectionValidator {
         }
         q.sort(Comparator.comparingInt(FundSelectionValidator::priority));
         return q;
+    }
+
+    /**
+     * Would putting held candidate {@code c} in place of {@code picked} break a fund-house rule (5.6B)?
+     * Returns the reason, or null. Index funds are exempt. Used so a valid skip (e.g. SBI Contra skipped
+     * because SBI Focused already fills the same growth slot) is not reported as a bug.
+     */
+    static boolean isValueCategory(Fund f) {
+        String c = f.category == null ? "" : f.category.toLowerCase();
+        return c.contains("value") || c.contains("contra");
+    }
+
+    static boolean hasTag(Fund f, String tag) {
+        return f.tags.stream().anyMatch(t -> t.toLowerCase().contains(tag));
+    }
+
+    static String fundHouseBlock(Fund c, Fund picked, List<Recommended> plan) {
+        if (c.index || c.amcId == null) {
+            return null;
+        }
+        List<Fund> others = plan.stream().map(Recommended::fund)
+                .filter(f -> f.planId != picked.planId && f.fundId != c.fundId && !f.index && f.amcId != null).toList();
+        for (Fund o : others) {
+            if (o.amcId.equals(c.amcId) && o.slot().equals(picked.slot())) {
+                return "fund house already used in the same '" + picked.slot() + "' slot by " + o.name + " (5.6B rule 3)";
+            }
+        }
+        boolean amcPresent = others.stream().anyMatch(o -> o.amcId.equals(c.amcId));
+        if (!amcPresent) {
+            return null;
+        }
+        if (plan.size() <= 4) {
+            return "plan has <=4 funds and fund house already used (5.6B)";
+        }
+        Map<Long, Long> counts = others.stream().collect(Collectors.groupingBy(o -> o.amcId, Collectors.counting()));
+        boolean otherDuplicate = counts.entrySet().stream().anyMatch(e -> e.getValue() > 1 && !e.getKey().equals(c.amcId));
+        return otherDuplicate ? "another fund house is already duplicated in this plan (5.6B rule 1)" : null;
     }
 
     private static int priority(Fund f) {
@@ -537,6 +615,12 @@ final class FundSelectionValidator {
                     f.rating = o.path("vr_rating").asInt();
                 }
                 f.ac = o.path("is_analyst_pick").asBoolean(false);
+                f.provisional = o.path("is_provisional").asBoolean(false);
+                for (JsonNode t : o.path("tag_name")) {
+                    if (!f.tags.contains(t.asText())) {
+                        f.tags.add(t.asText());
+                    }
+                }
                 f.opinionRaw = o;
             }
             AcInfo ac = acList.get(f.planId);
@@ -544,6 +628,11 @@ final class FundSelectionValidator {
                 f.ac = true;
                 f.acPriority = ac.priority();
                 f.watchlisted = ac.watchlisted();
+                for (String t : ac.tags()) {
+                    if (!f.tags.contains(t)) {
+                        f.tags.add(t);
+                    }
+                }
             }
         }
     }

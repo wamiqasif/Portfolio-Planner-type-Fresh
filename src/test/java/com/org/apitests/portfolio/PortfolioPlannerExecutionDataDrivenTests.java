@@ -116,9 +116,29 @@ public class PortfolioPlannerExecutionDataDrivenTests extends BaseTest {
                     .userId(Long.parseLong(row.userId()))
                     .riskProfileId(riskProfileId)
                     .annualIncomeRange(PlannerRequestDefaults.ANNUAL_INCOME_RANGE)
-                    .investorId(Long.parseLong(row.investorId()))
+                    .investorId(row.investorId() == null || row.investorId().isBlank() ? 0L : Long.parseLong(row.investorId()))
                     .awareType("PORTFOLIO_AWARE");
-            if ("TAX-SAVINGS".equals(goalType)) {
+            if ("REGULAR-INCOME".equals(goalType)) {
+                // Invest for monthly income - shape captured from the app (14-Oct-2026):
+                // start_regular_income = "Needed when?" (1 Immediately, 2 Next 1 year, 3 Next 1-5 years),
+                // annual_income_range from the sheet (app sends 2),
+                // needed_annual_amount = null for start 1, the entered amount for start 2/3.
+                request.without("duration_type").without("investment_duration");
+                scenario.map(PortfolioAwareScenarioRow::annualIncomeRange).filter(v -> v != null)
+                        .ifPresent(request::annualIncomeRange);
+                Integer start = scenario.map(PortfolioAwareScenarioRow::startRegularIncome).orElse(null);
+                if (start != null) {
+                    request.startRegularIncome(start);
+                }
+                scenario.map(PortfolioAwareScenarioRow::accumulatedAmount).filter(v -> v != null)
+                        .ifPresent(request::accumulatedAmount);
+                Long needed = scenario.map(PortfolioAwareScenarioRow::neededAnnualAmount).orElse(null);
+                if (needed != null) {
+                    request.neededAnnualAmount(needed);
+                } else if (start != null && start == 1) {
+                    request.neededAnnualAmount(null);
+                }
+            } else if ("TAX-SAVINGS".equals(goalType)) {
                 Long taxSavingAmount = scenario.map(PortfolioAwareScenarioRow::taxSavingAmount).orElse(null);
                 if (taxSavingAmount != null) {
                     request.taxSavingAmount(taxSavingAmount);
@@ -134,6 +154,18 @@ public class PortfolioPlannerExecutionDataDrivenTests extends BaseTest {
             io.restassured.response.Response portfolioHttpResponse =
                     portfolioService.getLabelOpinionData(row.labelId(), advisorApiRowSpec(rowSession));
             failIfPortfolioDataMissing(portfolioHttpResponse);
+            if (row.investorId() == null || row.investorId().isBlank()) {
+                // Test account given without Investor ID: use the investor of this label from label-opinion-data
+                java.util.regex.Matcher inv = java.util.regex.Pattern
+                        .compile("\"investor_id\"\\s*:\\s*(\\d+)[^}]*\"label_id\"\\s*:\\s*" + row.labelId() + "\\b")
+                        .matcher(portfolioHttpResponse.getBody().asString());
+                if (!inv.find()) {
+                    throw new IllegalStateException("Investor ID not given for label " + row.labelId()
+                            + " and not found in label-opinion-data label-data");
+                }
+                request.investorId(Long.parseLong(inv.group(1)));
+                description = request.toJson();
+            }
             UserPortfolioResponse portfolio = parseSuccessful(portfolioHttpResponse, UserPortfolioResponse.class, "User Portfolio");
             Set<Long> ownedFundIds = (portfolio.data() == null || portfolio.data().fundData() == null)
                     ? Set.of()

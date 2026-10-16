@@ -137,7 +137,14 @@ final class ExcelTestDataReader {
                     parseIntOrNull(r.get("Time (years)")),
                     parseLongOrNull(r.get("Lumpsum amount")),
                     parseLongOrNull(r.get("Monthly amount")),
-                    parseLongOrNull(r.get("Tax saving amount"))));
+                    parseLongOrNull(r.get("Tax saving amount")),
+                    parseIntOrNull(r.get("CASE ID") != null ? r.get("CASE ID") : r.get("Case ID")),
+                    parseLongOrNull(r.get("Accumulated amount")),
+                    parseLongOrNull(r.get("Needed annual amount")),
+                    r.get("Duration type"),
+                    parseIntOrNull(r.get("Investment duration")),
+                    parseIntOrNull(r.get("Annual income range")),
+                    parseIntOrNull(r.get("Start regular income"))));
         }
         return rows;
     }

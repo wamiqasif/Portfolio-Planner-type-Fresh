@@ -87,6 +87,15 @@ final class TestDataDriftChecker {
         boolean valuesDiffer = !same(sheetOpinion, liveOpinion) || !same(sheetStar, liveStar == null ? null : String.valueOf(liveStar))
                 || (sheetAc != null && sheetAc != liveAc);
 
+        // "Analyst's Choice NOT Direct-Growth": the reference fund is a Regular/IDCW plan, whose own opinion row is
+        // never Analyst's Choice - the Analyst's Choice flag belongs to its Direct-Growth plan, which this check
+        // cannot see. So a Regular plan that is Good is not drift here; FundSelectionValidator checks the rest.
+        if (CASE_AC_NOT_DG.equals(sheetCase) && Boolean.FALSE.equals(liveDirect)
+                && (CASE_GOOD45_REG.equals(liveCase) || CASE_GOOD123.equals(liveCase))) {
+            out.add(BusinessRuleResult.of(true, WARN + "Test data: Regular plan held - Analyst's Choice status of its "
+                    + "Direct-Growth plan not checked here", caseCovered, sheetValues, liveValues + " - " + fundName));
+            return out;
+        }
         if (liveCase != null && sheetCase != null && !liveCase.equals(sheetCase)) {
             boolean warnOnly = "warn".equalsIgnoreCase(System.getProperty("testdata.drift", "fail"));
             out.add(BusinessRuleResult.of(warnOnly,

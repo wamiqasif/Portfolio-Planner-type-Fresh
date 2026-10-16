@@ -55,6 +55,9 @@ final class PlannerRequestDefaults {
 
     /** {@code Portfolio_Aware_Scenarios}' "Goal" text -> {@code goal_type} - defaults to {@link #GOAL_TYPE} for anything other than the one confirmed TAX-SAVINGS label. */
     static String goalTypeFor(String goalLabel) {
+        if (goalLabel != null && goalLabel.toLowerCase().contains("income")) {
+            return "REGULAR-INCOME";
+        }
         if (goalLabel != null && goalLabel.trim().equalsIgnoreCase(TAX_SAVING_GOAL_LABEL)) {
             return "TAX-SAVINGS";
         }

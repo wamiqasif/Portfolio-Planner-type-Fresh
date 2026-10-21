@@ -113,7 +113,7 @@ public class PortfolioPlannerExecutionDataDrivenTests extends BaseTest {
                     .durationType("y")
                     .investmentDuration(durationYears)
                     .labelId(Long.parseLong(row.labelId()))
-                    .userId(Long.parseLong(row.userId()))
+                    .userId(row.userId() == null || row.userId().isBlank() ? 0L : Long.parseLong(row.userId()))
                     .riskProfileId(riskProfileId)
                     .annualIncomeRange(PlannerRequestDefaults.ANNUAL_INCOME_RANGE)
                     .investorId(row.investorId() == null || row.investorId().isBlank() ? 0L : Long.parseLong(row.investorId()))
@@ -154,6 +154,16 @@ public class PortfolioPlannerExecutionDataDrivenTests extends BaseTest {
             io.restassured.response.Response portfolioHttpResponse =
                     portfolioService.getLabelOpinionData(row.labelId(), advisorApiRowSpec(rowSession));
             failIfPortfolioDataMissing(portfolioHttpResponse);
+            if (row.userId() == null || row.userId().isBlank()) {
+                // Test account given without User ID (e.g. UAT sheet): leave user_id out of the request
+                String fallbackUser = System.getProperty("portfolio.fallback.userId");
+                if (fallbackUser != null && !fallbackUser.isBlank()) {
+                    request.userId(Long.parseLong(fallbackUser.trim()));
+                } else {
+                    request.without("user_id");
+                }
+                description = request.toJson();
+            }
             if (row.investorId() == null || row.investorId().isBlank()) {
                 // Test account given without Investor ID: use the investor of this label from label-opinion-data
                 java.util.regex.Matcher inv = java.util.regex.Pattern

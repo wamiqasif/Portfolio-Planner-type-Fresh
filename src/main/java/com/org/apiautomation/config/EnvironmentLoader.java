@@ -28,7 +28,7 @@ public final class EnvironmentLoader {
     public static final String ENV_ENVIRONMENT_VARIABLE = "ENV";
     public static final String DEFAULT_ENVIRONMENT = "qa";
 
-    private static final Set<String> SUPPORTED_ENVIRONMENTS = Set.of("dev", "qa", "stage", "prod");
+    private static final Set<String> SUPPORTED_ENVIRONMENTS = Set.of("dev", "qa", "stage", "prod", "uat");
 
     private EnvironmentLoader() {
     }

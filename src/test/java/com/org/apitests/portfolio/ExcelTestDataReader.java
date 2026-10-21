@@ -51,7 +51,7 @@ final class ExcelTestDataReader {
      * Type"/"Source", none of which readExecutionData() reads), so no
      * row-mapping change was needed here - only this resource/sheet pointer.
      */
-    private static final String QA_EXECUTION_DATA_WORKBOOK_RESOURCE = "testdata/Portfolio Planner Test CasesQA .xlsx";
+    private static final String QA_EXECUTION_DATA_WORKBOOK_RESOURCE = System.getProperty("portfolio.testdata.workbook", "testdata/Portfolio Planner Test CasesQA .xlsx");
     private static final String QA_EXECUTION_DATA_SHEET = "Test Accounts";
 
     /**

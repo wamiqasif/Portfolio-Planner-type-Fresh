@@ -486,6 +486,12 @@ final class FundSelectionValidator {
         if (plan.size() <= 4) {
             return "plan has <=4 funds and fund house already used (5.6B)";
         }
+        // 5.6B rule 1: max 2 funds from the same fund house. Categories are filled in descending order of the
+        // TOTAL amount to be invested (PM, 22-Oct-2026), so funds already holding the two places stay.
+        long sameAmc = others.stream().filter(o -> o.amcId.equals(c.amcId)).count();
+        if (sameAmc >= 2) {
+            return "fund house already has 2 funds in the plan (5.6B rule 1; categories filled by total amount, PM 22-Oct-2026)";
+        }
         Map<Long, Long> counts = others.stream().collect(Collectors.groupingBy(o -> o.amcId, Collectors.counting()));
         boolean otherDuplicate = counts.entrySet().stream().anyMatch(e -> e.getValue() > 1 && !e.getKey().equals(c.amcId));
         return otherDuplicate ? "another fund house is already duplicated in this plan (5.6B rule 1)" : null;

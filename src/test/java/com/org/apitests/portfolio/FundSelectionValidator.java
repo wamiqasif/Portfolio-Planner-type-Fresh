@@ -171,11 +171,17 @@ final class FundSelectionValidator {
         List<Fund> held = new ArrayList<>();
         Map<Long, Double> weightByFund = new HashMap<>();
         Map<Long, String> skippedHolding = new HashMap<>();
+        Map<Long, Double> weightByPlan = new HashMap<>();
+        List<String> redeemedHoldings = new ArrayList<>();
         JsonNode fundData = portfolio.path("data").path("fund-data");
         if (fundData.isObject()) {
             for (JsonNode entry : fundData) {
                 Fund f = parseFund(entry.path("plan-details"));
                 f.units = entry.path("analysis-data").path("total_units").asDouble(0);
+                weightByPlan.merge(f.planId, entry.path("analysis-data").path("weightage").asDouble(0), Double::sum);
+                if (f.units <= 0) {
+                    redeemedHoldings.add(f.name + " (plan " + f.planId + ") | units 0 - fully redeemed");
+                }
                 if (f.units <= 0 && !Boolean.parseBoolean(System.getProperty("selection.redeemedCountsAsHeld", "false"))) {
                     skippedHolding.putIfAbsent(f.fundId, "held with 0 units (fully redeemed): " + f.name);
                     continue;
@@ -222,6 +228,7 @@ final class FundSelectionValidator {
         List<Recommended> recommended = recommendedFunds(planner, fetcher, acList);
         if (recommended.isEmpty()) {
             out.add(BusinessRuleResult.of(true, WARN + "No recommended funds found in response - selection not validated", scenario, "funds", "none"));
+            ReportExtras.put(plannerBody, holdingsText(held, weightByPlan, redeemedHoldings, candidateByFund), "");
             return out;
         }
         Set<String> slotsInPlan = recommended.stream().map(r -> r.fund().slot()).collect(Collectors.toSet());
@@ -336,10 +343,8 @@ final class FundSelectionValidator {
                     if (why == null) {
                         why = fundHouseBlock(c, rf, recommended);
                     }
-                    if (why == null && incomePlan && "growth".equals(slot) && isValueCategory(c)) {
-                        why = "monthly income plan: Value funds are not used in the growth slot (dev/PM, 16-Oct-2026); category="
-                                + c.category;
-                    }
+                    // (v21) Removed the "Value funds are not used in the monthly income growth slot" rule: it came from a
+                    // developer statement, not from the logic doc. Only the doc rule (5.4.3 prefer Diversified) is kept below.
                     if (why == null && incomePlan && "growth".equals(slot) && !hasTag(c, "diversified")) {
                         why = "monthly income plan: growth slot needs the 'Diversified' tag (PM, 15-Oct-2026); tags="
                                 + c.tags;
@@ -398,6 +403,8 @@ final class FundSelectionValidator {
 
         // (5) fund-house diversification (5.6B / 5.7)
         out.addAll(fundHouseRules(recommended, scenario));
+        ReportExtras.put(plannerBody, holdingsText(held, weightByPlan, redeemedHoldings, candidateByFund),
+                recommendedTagsText(recommended));
         return out;
     }
 
@@ -425,11 +432,14 @@ final class FundSelectionValidator {
         if (c.good() && !c.ac && c.rating != null && c.rating >= 1 && c.rating <= 3) {
             return "Good but not AC and rated " + c.rating + " star";
         }
-        // pseudocode applies exclusions to the HELD plan before adding its Direct-Growth variant
+        // pseudocode applies exclusions to the HELD plan before adding its Direct-Growth variant.
+        // v23: 5.2A rule 4 excludes a fund that is 'Good' AND NOT Analyst's Choice AND rated 1-3 star. The opinion
+        // (incl. Analyst's Choice) belongs to the FUND, so if the fund's Direct-Growth plan is Analyst's Choice the
+        // held Regular/IDCW plan's own rating does not exclude it (dev fix + analyst check, UAT 26-Oct-2026).
         boolean heldPlanGood = c.heldPlanOpinionTypeId != null
                 ? c.heldPlanOpinionTypeId == GOOD_OPINION_TYPE_ID
                 : "good".equalsIgnoreCase(c.heldPlanClassification); // opinion API often has no row for Regular/IDCW plans
-        if (c.heldAs != null && heldPlanGood
+        if (c.heldAs != null && heldPlanGood && !c.ac
                 && !c.heldPlanAc && c.heldPlanRating != null && c.heldPlanRating >= 1 && c.heldPlanRating <= 3) {
             return "held plan (" + c.heldAs + ") is Good but not AC and rated " + c.heldPlanRating + " star";
         }
@@ -462,6 +472,55 @@ final class FundSelectionValidator {
     static boolean isValueCategory(Fund f) {
         String c = f.category == null ? "" : f.category.toLowerCase();
         return c.contains("value") || c.contains("contra");
+    }
+
+    // ---- report extras (v22): readable holdings and tags for the report ------------------------------------------
+
+    private static String opinionText(Integer opinionTypeId) {
+        if (opinionTypeId == null) {
+            return "no opinion";
+        }
+        return opinionTypeId == GOOD_OPINION_TYPE_ID ? "Good" : "not Good (opinion type " + opinionTypeId + ")";
+    }
+
+    static String holdingsText(List<Fund> held, Map<Long, Double> weightByPlan, List<String> redeemed, Map<Long, Fund> candidateByFund) {
+        StringBuilder sb = new StringBuilder();
+        int i = 1;
+        for (Fund h : held) {
+            sb.append(i++).append(". ").append(h.name).append(" (plan ").append(h.planId).append(")")
+              .append(" | units ").append(String.format("%.3f", h.units))
+              .append(" | ").append(String.format("%.2f", weightByPlan.getOrDefault(h.planId, 0.0))).append("% of portfolio")
+              .append(" | ").append(opinionText(h.opinionTypeId))
+              .append(" | ").append(h.rating == null ? "unrated" : h.rating + " star")
+              .append(" | Analyst's Choice: ").append(h.ac ? "yes" : "no");
+            Fund dg = candidateByFund.get(h.fundId);
+            if (dg != null && dg != h) {
+                sb.append(" | Direct-G: ").append(dg.name).append(" (plan ").append(dg.planId).append("), AC ").append(dg.ac ? "yes" : "no")
+                  .append(", ").append(opinionText(dg.opinionTypeId));
+            }
+            if (dg != null && dg.exclusion != null) {
+                sb.append(" | EXCLUDED: ").append(dg.exclusion);
+            }
+            sb.append('\n');
+        }
+        for (String r : redeemed) {
+            sb.append(i++).append(". ").append(r).append('\n');
+        }
+        return sb.length() == 0 ? "no fund holdings" : sb.toString().trim();
+    }
+
+    static String recommendedTagsText(List<Recommended> recommended) {
+        StringBuilder sb = new StringBuilder();
+        int i = 1;
+        for (Recommended r : recommended) {
+            Fund f = r.fund();
+            sb.append(i++).append(". ").append(f.name).append(" (plan ").append(f.planId).append(")")
+              .append(" | tags ").append(f.tags.isEmpty() ? "-" : String.join(", ", f.tags))
+              .append(" | Analyst's Choice: ").append(f.ac ? "yes, priority " + (f.acPriority == null ? "-" : f.acPriority) : "no")
+              .append(r.isOwned() ? " | Already yours" : "")
+              .append('\n');
+        }
+        return sb.toString().trim();
     }
 
     static boolean hasTag(Fund f, String tag) {

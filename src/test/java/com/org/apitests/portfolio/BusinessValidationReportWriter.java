@@ -38,26 +38,35 @@ final class BusinessValidationReportWriter {
     }
 
     /** One entry per {@link #header()} column, in the same order - {@link PortfolioExcelReportSupport#writeDetailSheet} verifies every row's size matches the header's, so a column added to one and not the other fails the write rather than silently misaligning. */
-    static List<List<String>> detailRows() {
+    static List<List<String>> detailRows() { /* report layout v22b */
         List<List<String>> rows = new ArrayList<>();
         for (BusinessValidationReportRow row : ROWS) {
             rows.add(List.of(
-                    nullToEmpty(row.tcId()), nullToEmpty(row.fundsInPortfolio()), nullToEmpty(row.description()), nullToEmpty(row.plannerGenerateResponse()),
+                    nullToEmpty(row.tcId()), nullToEmpty(row.description()), nullToEmpty(row.plannerGenerateResponse()),
+                    extrasHoldings(row), extrasTags(row),
                     nullToEmpty(row.labelId()), nullToEmpty(row.investorId()),
-                    nullToEmpty(row.caseCovered()), nullToEmpty(row.fundCategory()), nullToEmpty(row.plannerMode()),
-                    nullToEmpty(row.expectedBusinessRule()), nullToEmpty(row.expectedPlanIds()), nullToEmpty(row.actualPlanIds()),
-                    nullToEmpty(row.expectedCategory()), nullToEmpty(row.actualCategory()), nullToEmpty(row.allocationResult()),
-                    nullToEmpty(row.fundDetailsResponse()),
+                    nullToEmpty(row.caseCovered()), nullToEmpty(row.fundCategory()),
+                    nullToEmpty(row.actualPlanIds()), nullToEmpty(row.allocationResult()),
                     nullToEmpty(row.result()), nullToEmpty(row.failureReason()), nullToEmpty(row.apiResponsible())));
         }
         return rows;
     }
 
     static List<String> header() {
-        return List.of("TC ID", "Funds in Portfolio", "Payload (planner/funds-buy/generate)", "Response (planner/funds-buy/generate)", "label_id", "investor_id", "Case Covered", "Fund Category", "Planner Mode",
-                "Expected Business Rule", "Expected Plan IDs", "Actual Plan IDs", "Expected Category",
-                "Actual Category", "Allocation Result", "Fund Details Response",
+        return List.of("TC ID", "Payload (planner/funds-buy/generate)", "Response (planner/funds-buy/generate)",
+                "Investor Holdings (plan, units, %, opinion, rating, AC)", "Recommended Funds - Tags & AC Priority",
+                "label_id", "investor_id", "Case Covered", "Fund Category", "Actual Plan IDs", "Allocation Result",
                 "PASS/FAIL", "Failure Reason", "API responsible");
+    }
+
+    private static String extrasHoldings(BusinessValidationReportRow row) {
+        ReportExtras.Extras e = ReportExtras.get(row.plannerGenerateResponse());
+        return e == null ? "" : nullToEmpty(e.holdings());
+    }
+
+    private static String extrasTags(BusinessValidationReportRow row) {
+        ReportExtras.Extras e = ReportExtras.get(row.plannerGenerateResponse());
+        return e == null ? "" : nullToEmpty(e.recommendedTags());
     }
 
     private static String nullToEmpty(String value) {
